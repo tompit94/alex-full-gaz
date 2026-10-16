@@ -1,4 +1,4 @@
--- Alex: Full Gaz ! : base des scores
+-- Full Gaz ! : base des scores
 -- À coller dans Supabase > SQL Editor > New query, puis "Run".
 -- Le script peut être relancé sans risque.
 

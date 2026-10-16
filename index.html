@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Alex: Full Gaz !</title>
-<meta name="description" content="Alex ramasse les friandises, fuit les monstres à coups de prouts et de cacas, et les écrase avec sa Hyundai.">
+<title>Full Gaz !</title>
+<meta name="description" content="Ramasse les friandises, fuit les monstres à coups de prouts et de cacas, et les écrase avec sa Hyundai.">
 <meta name="theme-color" content="#2f6b2a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -119,7 +119,7 @@ html,body{height:100%;overflow:hidden;background:#2f6b2a;color:var(--ink);font-f
 @media (prefers-reduced-motion:reduce){.gauge.full .bar,.cafe.has .cup{animation:none}}
 </style>
 
-<canvas id="game" aria-label="Jeu Alex: Full Gaz !"></canvas>
+<canvas id="game" aria-label="Jeu Full Gaz !"></canvas>
 
 <div id="hud" hidden>
   <div>
@@ -147,15 +147,15 @@ html,body{height:100%;overflow:hidden;background:#2f6b2a;color:var(--ink);font-f
 
 <div class="screen" id="startS">
   <div class="card">
-    <h1 class="title out">Alex:<br>Full Gaz !</h1>
+    <h1 class="title out">Full<br>Gaz !</h1>
     <div class="cast" id="cast"></div>
     <ul class="rules">
       <li><canvas data-ico="donut" width="80" height="80"></canvas><span><b>Mange un max de friandises.</b> Viennoiseries, éclairs, donuts, bonbons : chacune rapporte des points.</span></li>
       <li><canvas data-ico="cloud" width="80" height="80"></canvas><span><b>5 friandises = jauge pleine.</b> Lâche un prout qui assomme les monstres autour de toi.</span></li>
       <li><canvas data-ico="coffee" width="80" height="80"></canvas><span><b>Bois un café</b> pour pouvoir poser un gros caca. Le monstre qui marche dedans est éliminé.</span></li>
-      <li><canvas data-ico="key" width="80" height="80"></canvas><span><b>Attrape la clé Hyundai</b> (elle est rare) : Alex prend le volant pendant 15 s. Les rôles s'inversent, écrase les monstres !</span></li>
+      <li><canvas data-ico="key" width="80" height="80"></canvas><span><b>Attrape la clé Hyundai</b> (elle est rare) : tu prends le volant pendant 15 s. Les rôles s'inversent, écrase les monstres !</span></li>
     </ul>
-    <div class="field"><label for="pseudo">Ton pseudo</label><input id="pseudo" maxlength="16" autocomplete="nickname" spellcheck="false" placeholder="ex. Alex"></div>
+    <div class="field"><label for="pseudo">Ton pseudo</label><input id="pseudo" maxlength="16" autocomplete="nickname" spellcheck="false" placeholder="ex. Turbo"></div>
     <p class="err" id="pseudoErr" hidden></p>
     <button class="btn" id="play" disabled>Chargement…</button>
     <button class="link" id="openBoard" type="button">Voir le classement</button>

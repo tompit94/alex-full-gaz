@@ -1,4 +1,4 @@
-# Alex: Full Gaz ! : mise en ligne
+# Full Gaz ! : mise en ligne
 
 Le dossier contient tout le site :
 
@@ -57,7 +57,7 @@ Enregistre le fichier.
 
 ## 4. Jouer sur téléphone
 
-Ouvre l'adresse dans Chrome, puis **⋮ → Ajouter à l'écran d'accueil**. Le jeu s'ouvre alors en plein écran, avec l'icône d'Alex, comme une application.
+Ouvre l'adresse dans Chrome, puis **⋮ → Ajouter à l'écran d'accueil**. Le jeu s'ouvre alors en plein écran, avec l'icône du héros, comme une application.
 
 ---
 
@@ -66,7 +66,7 @@ Ouvre l'adresse dans Chrome, puis **⋮ → Ajouter à l'écran d'accueil**. Le 
 - À l'accueil, chaque joueur tape un **pseudo**. Le téléphone ou le navigateur s'en souvient pour les fois suivantes.
 - Chaque partie est enregistrée avec son score, les friandises mangées, les monstres éliminés et la durée.
 - Le **classement** affiche le meilleur score de chaque pseudo et son nombre de parties. Il est visible depuis l'accueil (« Voir le classement ») et à la fin de chaque partie, avec la position du joueur.
-- Les majuscules ne comptent pas : « Alex » et « alex » sont le même joueur.
+- Les majuscules ne comptent pas : « Turbo » et « turbo » sont le même joueur.
 - Tant que `config.js` n'est pas rempli, le jeu marche quand même et garde les scores **sur l'appareil** uniquement.
 
 **Protections en place**
