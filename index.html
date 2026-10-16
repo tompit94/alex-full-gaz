@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Full Gaz !</title>
 <meta name="description" content="Ramasse les friandises, fuit les monstres à coups de prouts et de cacas, et les écrase en voiture ou à coups de marteau.">
-<meta name="theme-color" content="#2f6b2a">
+<meta name="theme-color" content="#120d1c">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="icon" href="icon.png">
@@ -15,7 +15,7 @@
 </head>
 <body>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Nunito:wght@600;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Nunito:wght@600;800&family=Pixelify+Sans:wght@400;600;700&family=Silkscreen:wght@400;700&display=swap">
 <style>
 /* Plein écran : le parc en canvas, le HUD et les écrans en surcouche DOM. Univers unique (cartoon), pas de thème sombre. */
 :root{
@@ -24,6 +24,10 @@
   --prout:#8fdc3c; --prout-deep:#3f8f18; --caca:#8a5228; --red:#e8402f;
   --display:"Luckiest Guy","Arial Black",Impact,sans-serif;
   --body:"Nunito",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --pix:"Silkscreen","Press Start 2P","Courier New",monospace;
+  --pixbody:"Pixelify Sans","Trebuchet MS",system-ui,sans-serif;
+  --night:#120d1c; --stone:#221a30; --stone-2:#2d2340; --edge:#07040b;
+  --ember:#ff8a1f; --flame:#ffd34a; --blood:#c8321c; --parch:#f3e3c3; --mist:#a99bc0;
 }
 html,body{height:100%;overflow:hidden;background:#2f6b2a;color:var(--ink);font-family:var(--body);
   -webkit-user-select:none;user-select:none;touch-action:none;-webkit-tap-highlight-color:transparent}
@@ -126,6 +130,72 @@ html,body{height:100%;overflow:hidden;background:#2f6b2a;color:var(--ink);font-f
 .boardhead{display:flex;justify-content:space-between;font-size:12px;font-weight:800;color:#6b5844;padding:0 10px;text-transform:uppercase;letter-spacing:.06em}
 .who{margin:0;font-size:14px;color:#6b5844}.who b{color:var(--ink)}
 @media (prefers-reduced-motion:reduce){.gauge.full .bar,.cafe.has .cup{animation:none}}
+
+/* ===== Menus : château pixel, braises et curseur ▶ ===== */
+.screen{background:rgba(9,5,15,.72);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+.screen .card{background:linear-gradient(180deg,var(--stone-2),var(--stone) 40%,#17111f);color:var(--parch);font-family:var(--pixbody);
+  border:4px solid var(--edge);border-radius:4px;box-shadow:0 0 0 3px #8a4a16,0 0 0 6px var(--edge),0 0 34px 8px rgba(255,120,30,.22),0 14px 0 6px rgba(0,0,0,.45);
+  padding:20px 18px 18px;gap:12px;image-rendering:pixelated}
+.screen .title{font-family:var(--pix);font-weight:700;text-transform:uppercase;letter-spacing:.02em;font-size:clamp(30px,8vw,44px);line-height:1;
+  background:linear-gradient(180deg,#fff1b8 0%,var(--flame) 38%,var(--ember) 68%,var(--blood) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;
+  filter:drop-shadow(2px 0 0 var(--edge)) drop-shadow(-2px 0 0 var(--edge)) drop-shadow(0 2px 0 var(--edge)) drop-shadow(0 -2px 0 var(--edge)) drop-shadow(0 5px 0 #5a160b)}
+.screen .btn,.mi{font-family:var(--pix);font-weight:700;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;color:var(--parch);background:transparent;border:3px solid transparent;border-radius:2px;
+  padding:8px 14px 8px 34px;position:relative;text-align:left;font-size:18px;box-shadow:none;text-shadow:0 2px 0 var(--edge);transition:color .1s}
+.screen .btn::before,.mi::before{content:"▶";position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--flame);opacity:0;font-size:14px}
+.screen .btn:hover,.screen .btn:focus-visible,.mi:hover,.mi:focus-visible{color:var(--flame);outline:none}
+.screen .btn:hover::before,.screen .btn:focus-visible::before,.mi:hover::before,.mi:focus-visible::before{opacity:1;animation:nudge .6s steps(2) infinite}
+.screen .btn,.mi-main{background:linear-gradient(#1b1226,#0d0814);border-color:var(--flame);color:var(--flame);font-size:22px;box-shadow:inset 0 0 0 2px #5c3a0c,0 0 18px rgba(255,190,60,.25);text-align:center;padding-left:34px;padding-right:34px}
+.screen .btn::before,.mi-main::before{opacity:1;animation:nudge .6s steps(2) infinite}
+.screen .btn:active,.mi:active{transform:translateY(2px)}
+.screen .btn[disabled],.mi[disabled]{opacity:.55;cursor:wait}
+@keyframes nudge{50%{transform:translate(4px,-50%)}}
+.screen .hint,.screen .who,.screen .save,.screen .stats{color:var(--mist);font-family:var(--pixbody)}
+.screen .save.ok{color:#8fe36a}.screen .save.bad{color:#ff7a5c}
+.screen .big{font-family:var(--pix);font-weight:700;color:var(--flame);text-shadow:0 3px 0 #7a2a0c,0 0 20px rgba(255,170,40,.45);font-size:52px}
+.screen .stats strong{font-family:var(--pix);color:var(--parch);font-size:22px}
+.screen .link{font-family:var(--pix);font-size:13px;color:var(--mist);text-decoration:none;text-transform:uppercase;letter-spacing:.05em}
+.screen .link:hover,.screen .link:focus-visible{color:var(--flame);outline:none}
+.screen .boardhead{color:var(--mist);font-family:var(--pix);font-size:11px}
+.screen .board li{background:rgba(255,255,255,.05);border:2px solid #3a2d52;border-radius:2px;font-family:var(--pixbody)}
+.screen .board li .rk,.screen .board li .pt{font-family:var(--pix);color:var(--flame)}
+.screen .board li .nm small{color:var(--mist)}
+.screen .board li:nth-child(1) .rk{color:#fff1b8}
+.screen .board li.me{background:rgba(255,190,60,.16);border-color:var(--flame);outline:none;color:#fff}
+.screen .board .empty{background:none;border:0;color:var(--mist)}
+.screen .rules{font-family:var(--pixbody);font-size:16px;color:var(--parch)}
+.screen .rules b{color:var(--flame);font-weight:600}
+.screen .field label{font-family:var(--pix);font-size:12px;letter-spacing:.06em;color:var(--mist)}
+.screen .field input{font-family:var(--pix);font-size:18px;font-weight:700;letter-spacing:.04em;background:#0b0711;color:var(--flame);border:3px solid #4a3a66;border-radius:2px}
+.screen .field input:focus-visible{outline:none;border-color:var(--flame);box-shadow:0 0 0 2px #5c3a0c}
+.screen .field input::placeholder{color:#5e5175}
+.screen .err{color:#ff7a5c;font-family:var(--pixbody)}
+.screen .cast img{height:52px;filter:drop-shadow(0 3px 0 rgba(0,0,0,.5))}
+
+/* Écran titre : l'illustration en fond, le menu par-dessus */
+.title-screen{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px));
+  background:var(--night) url("menu-bg.webp") center 30%/cover no-repeat;backdrop-filter:none;-webkit-backdrop-filter:none}
+.title-screen::before{content:"";position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(9,5,15,0) 38%,rgba(9,5,15,.55) 62%,rgba(9,5,15,.92) 100%)}
+.title-screen .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.menu{position:relative;width:100%;max-width:430px;display:flex;flex-direction:column;gap:10px;text-align:center}
+.menu .row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.menu .row .mi{font-size:15px;padding-right:12px}
+.menu .pick{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.menu .pc{flex-direction:row;align-items:center;gap:8px;padding:6px 8px;border-radius:2px;border:3px solid #3a2d52;background:rgba(0,0,0,.35);color:var(--parch);box-shadow:none;text-align:left}
+.menu .pc img{height:52px}
+.menu .pc b{font-family:var(--pix);font-weight:700;font-size:14px;text-transform:uppercase;display:block}
+.menu .pc small{font-family:var(--pixbody);font-weight:400;font-size:12px;color:var(--mist);display:block}
+.menu .pc[aria-checked="true"]{border-color:var(--flame);background:rgba(255,170,40,.14);transform:none;box-shadow:0 0 14px rgba(255,170,40,.3)}
+.menu .pc[aria-checked="true"] b{color:var(--flame)}
+.menu .pc:focus-visible{outline:2px dashed var(--flame);outline-offset:3px}
+.menu .field{flex-direction:row;align-items:center;gap:10px}
+.menu .field label{white-space:nowrap}
+.menu .field input{padding:7px 10px;font-size:16px}
+@media (min-width:700px) and (min-height:560px){.title-screen{background-position:center 34%}}
+@media (orientation:portrait){.title-screen{justify-content:flex-start;background-size:min(250vw,1650px) auto;background-position:center top;padding-top:calc(min(84vw,650px) + env(safe-area-inset-top,0px))}}
+@media (orientation:portrait) and (max-width:520px){.title-screen{background-image:url("menu-bg-s.webp")}}
+.screen .cast{height:auto}
+@media (max-height:520px) and (orientation:landscape){.title-screen{justify-content:center}.menu .pc img{height:40px}}
+@media (prefers-reduced-motion:reduce){.screen .btn::before,.mi::before,.mi-main::before{animation:none}}
 </style>
 
 <canvas id="game" aria-label="Jeu Full Gaz !"></canvas>
@@ -154,32 +224,38 @@ html,body{height:100%;overflow:hidden;background:#2f6b2a;color:var(--ink);font-f
   <div class="act" id="bProut" role="button" aria-label="Lâcher un prout">PROUT<small id="bProutN">0/5</small><span class="kb deskOnly">ESPACE</span></div>
 </div>
 
-<div class="screen" id="startS">
-  <div class="card">
-    <h1 class="title out">Full<br>Gaz !</h1>
-    <div class="cast" id="cast"></div>
-    <p class="picklbl" id="pickLbl">Choisis ton perso</p>
-    <div class="pick" role="radiogroup" aria-labelledby="pickLbl">
-      <button class="pc" type="button" role="radio" data-ch="sucre" aria-checked="true"><img data-hero="idle" alt=""><b>Le Sucré</b><small>Viennoiseries, éclairs, bonbons · voiture</small></button>
-      <button class="pc" type="button" role="radio" data-ch="sale" aria-checked="false"><img data-hero="b_idle" alt=""><b>Le Salé</b><small>Pâtes, burgers · marteau</small></button>
+<div class="screen title-screen" id="startS">
+  <h1 class="sr">Full Gaz !</h1>
+  <div class="menu card">
+    <button class="mi mi-main" id="play" disabled>Chargement…</button>
+    <div class="pick" role="radiogroup" aria-label="Personnage">
+      <button class="pc" type="button" role="radio" data-ch="sucre" aria-checked="true"><img data-hero="idle" alt=""><span><b>Le Sucré</b><small>Viennoiseries · voiture</small></span></button>
+      <button class="pc" type="button" role="radio" data-ch="sale" aria-checked="false"><img data-hero="b_idle" alt=""><span><b>Le Salé</b><small>Pâtes, burgers · marteau</small></span></button>
     </div>
+    <div class="field"><label for="pseudo">Pseudo</label><input id="pseudo" maxlength="16" autocomplete="nickname" spellcheck="false" placeholder="ex. Turbo"></div>
+    <p class="err" id="pseudoErr" hidden></p>
+    <div class="row"><button class="mi" id="openBoard" type="button">Classement</button><button class="mi" id="openRules" type="button">Règles</button></div>
+    <p class="hint" id="ctrlHint">Flèches ou ZQSD pour courir · Espace : prout · C : caca</p>
+  </div>
+</div>
+
+<div class="screen" id="rulesS" hidden>
+  <div class="card">
+    <h2 class="title">Règles</h2>
+    <div class="cast" id="cast"></div>
     <ul class="rules">
       <li><canvas id="icoFood" data-ico="donut" width="80" height="80"></canvas><span id="ruleFood"></span></li>
       <li><canvas data-ico="cloud" width="80" height="80"></canvas><span><b id="ruleGauge">5 friandises = jauge pleine.</b> Lâche un prout qui assomme les monstres autour de toi.</span></li>
       <li><canvas data-ico="coffee" width="80" height="80"></canvas><span><b>Bois un café</b> pour pouvoir poser un gros caca. Le monstre qui marche dedans est éliminé.</span></li>
       <li><canvas id="icoPower" width="80" height="80"></canvas><span id="rulePower"></span></li>
     </ul>
-    <div class="field"><label for="pseudo">Ton pseudo</label><input id="pseudo" maxlength="16" autocomplete="nickname" spellcheck="false" placeholder="ex. Turbo"></div>
-    <p class="err" id="pseudoErr" hidden></p>
-    <button class="btn" id="play" disabled>Chargement…</button>
-    <button class="link" id="openBoard" type="button">Voir le classement</button>
-    <p class="hint" id="ctrlHint">Flèches ou ZQSD pour courir · Espace : prout · C : caca</p>
+    <button class="btn" id="closeRules">Retour</button>
   </div>
 </div>
 
 <div class="screen" id="overS" hidden>
   <div class="card">
-    <h2 class="title out">Attrapé !</h2>
+    <h2 class="title">Attrapé !</h2>
     <div class="big" id="finalScore">0</div>
     <div class="stats"><div><strong id="stEat">0</strong><span id="stEatL">friandises</span></div><div><strong id="stKo">0</strong>monstres éliminés</div><div><strong id="stBest">0</strong>ton record</div></div>
     <p class="save" id="saveMsg"></p>
@@ -192,7 +268,7 @@ html,body{height:100%;overflow:hidden;background:#2f6b2a;color:var(--ink);font-f
 
 <div class="screen" id="boardS" hidden>
   <div class="card">
-    <h2 class="title out">Classement</h2>
+    <h2 class="title">Classement</h2>
     <p class="who" id="boardWho"></p>
     <div class="boardhead"><span>Joueur</span><span>meilleur score</span></div>
     <ol class="board" id="fullBoard"></ol>
@@ -201,7 +277,7 @@ html,body{height:100%;overflow:hidden;background:#2f6b2a;color:var(--ink);font-f
 </div>
 
 <div class="screen" id="pauseS" hidden>
-  <div class="card"><h2 class="title out">Pause</h2><button class="btn" id="resume">Reprendre</button></div>
+  <div class="card"><h2 class="title">Pause</h2><button class="btn" id="resume">Reprendre</button></div>
 </div>
 
 <script>
@@ -665,8 +741,11 @@ function openBoard(){$("boardS").hidden=false;$("boardWho").innerHTML="";const w
   w.textContent=Scores.online?"Les meilleurs scores de tous les joueurs.":"Classement local : scores joués sur cet appareil.";renderBoard($("fullBoard"),50);$("closeBoard").focus()}
 function setPause(p){if(!running)return;paused=p;$("pauseS").hidden=!p;joy.on=false;keysDown.clear()}
 $("play").onclick=()=>{if(askPseudo())start()};$("again").onclick=start;
-$("pseudo").value=pseudo;$("pseudo").addEventListener("input",()=>{$("pseudoErr").hidden=true});$("pseudo").addEventListener("keydown",e=>{e.stopPropagation();if(e.key==="Enter"&&!$("play").disabled)$("play").click()});
-$("openBoard").onclick=openBoard;$("closeBoard").onclick=()=>{$("boardS").hidden=true};
+$("pseudo").value=pseudo;$("pseudo").addEventListener("input",()=>{$("pseudoErr").hidden=true});$("pseudo").addEventListener("keydown",e=>{if(e.key!=="ArrowUp"&&e.key!=="ArrowDown")e.stopPropagation();if(e.key==="Enter"&&!$("play").disabled)$("play").click()});
+$("openBoard").onclick=openBoard;
+$("openRules").onclick=()=>{$("rulesS").hidden=false;$("closeRules").focus()};$("closeRules").onclick=()=>{$("rulesS").hidden=true;$("openRules").focus()};
+$("startS").addEventListener("keydown",e=>{if(e.key!=="ArrowDown"&&e.key!=="ArrowUp")return;  const items=[$("play"),document.querySelector('.pc[aria-checked="true"]'),$("pseudo"),$("openBoard"),$("openRules")];let i=items.indexOf(document.activeElement);
+  if(i<0)i=0;else i=(i+(e.key==="ArrowDown"?1:items.length-1))%items.length;e.preventDefault();items[i].focus()});$("closeBoard").onclick=()=>{$("boardS").hidden=true};
 $("changePseudo").onclick=()=>{$("overS").hidden=true;$("hud").hidden=true;$("startS").hidden=false;$("pseudo").focus();$("pseudo").select()};$("resume").onclick=()=>{audio();setPause(false)};$("pauseB").onclick=()=>setPause(true);
 $("mute").onclick=()=>{muted=!muted;$("mute").textContent=muted?"🔇":"🔊";try{localStorage.setItem("gef_mute",muted?"1":"0")}catch(e){}};$("mute").textContent=muted?"🔇":"🔊";
 document.addEventListener("visibilitychange",()=>{if(document.hidden)setPause(true)});
