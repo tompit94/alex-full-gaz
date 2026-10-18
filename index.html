@@ -12,9 +12,53 @@
 <link rel="icon" type="image/png" sizes="512x512" href="icon.png?v=2">
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png?v=2">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}*,*::before,*::after{box-sizing:border-box}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<link rel="preload" as="image" href="splash.webp" fetchpriority="high">
 <script src="config.js"></script>
 </head>
 <body>
+<div id="splash" role="img" aria-label="Full Gaz ! Chargement">
+<div class="sp-bg"></div>
+<img class="sp-img" src="splash.webp" alt="" decoding="async" fetchpriority="high">
+<div class="sp-load">
+  <div class="sp-bar"><div class="sp-fill" id="spFill"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="sp-txt" id="spTxt">Plein de gaz… 0%</div>
+</div>
+</div>
+<style>
+#splash{position:fixed;inset:0;z-index:9999;background:#0d0912;overflow:hidden;transition:opacity .45s ease}
+#splash.out{opacity:0;pointer-events:none}
+#splash .sp-bg{position:absolute;inset:-40px;background:#0d0912 url("splash-s.webp") center/cover no-repeat;filter:blur(24px) brightness(.55)}
+#splash .sp-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 30%}
+@media (min-aspect-ratio:3/4){#splash .sp-img{object-fit:contain;object-position:center}}
+#splash .sp-load{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(7vh + env(safe-area-inset-bottom,0px));width:min(78vw,420px);text-align:center}
+#splash .sp-bar{position:relative;height:clamp(20px,3.4vh,28px);padding:4px;border-radius:999px;background:#140b06;border:3px solid #fff6e0;
+  box-shadow:0 4px 0 #07040b,0 0 22px rgba(143,220,60,.45)}
+#splash .sp-fill{position:relative;height:100%;width:0%;border-radius:999px;overflow:hidden;transition:width .25s ease-out;
+  background:linear-gradient(180deg,#d6ff7a 0%,#8fdc3c 40%,#3f8f18 100%);box-shadow:0 0 12px #8fdc3c,inset 0 -3px 0 rgba(0,0,0,.25)}
+#splash .sp-fill::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,rgba(255,255,255,.22) 0 10px,transparent 10px 22px);animation:spSlide .8s linear infinite}
+#splash .sp-fill i{position:absolute;bottom:-6px;width:7px;height:7px;border-radius:50%;background:rgba(235,255,190,.85);animation:spBub 1.6s ease-in infinite}
+#splash .sp-fill i:nth-child(1){left:8%}#splash .sp-fill i:nth-child(2){left:24%;animation-delay:.4s;width:5px;height:5px}
+#splash .sp-fill i:nth-child(3){left:41%;animation-delay:.9s}#splash .sp-fill i:nth-child(4){left:58%;animation-delay:.2s;width:5px;height:5px}
+#splash .sp-fill i:nth-child(5){left:74%;animation-delay:1.2s}#splash .sp-fill i:nth-child(6){left:90%;animation-delay:.7s;width:4px;height:4px}
+#splash .sp-txt{margin-top:10px;font-family:"Silkscreen","Courier New",monospace;font-size:clamp(13px,3.6vw,18px);letter-spacing:.06em;color:#d6ff7a;
+  text-shadow:2px 0 #07040b,-2px 0 #07040b,0 2px #07040b,0 -2px #07040b,0 0 10px rgba(143,220,60,.7)}
+@keyframes spSlide{to{background-position:44px 0}}
+@keyframes spBub{0%{transform:translateY(0);opacity:0}25%{opacity:1}100%{transform:translateY(-28px);opacity:0}}
+@media (prefers-reduced-motion:reduce){#splash .sp-fill::after,#splash .sp-fill i{animation:none}}
+</style>
+<script>
+/* Splash : progression simulée pendant le téléchargement de la page, puis réelle pendant le chargement des sprites */
+window.SPLASH=(function(){const t0=performance.now(),MIN=1800;let shown=0,target=0,real=-1,done=false;
+  const f=document.getElementById("spFill"),tx=document.getElementById("spTxt"),el=document.getElementById("splash");
+  function tick(){if(!el.isConnected)return;const el2=(performance.now()-t0)/1000;
+    if(real<0)target=.6*(1-Math.exp(-el2/1.6));else target=Math.max(target,real);
+    shown+=(target-shown)*.18;if(done&&target>=1&&shown>.995)shown=1;
+    f.style.width=(shown*100).toFixed(1)+"%";tx.textContent=(shown>=1?"Full gaz !":"Plein de gaz… "+Math.round(shown*100)+"%");
+    if(done&&shown>=1){const w=Math.max(0,MIN-(performance.now()-t0));setTimeout(()=>{el.classList.add("out");setTimeout(()=>el.remove(),500)},w+250);return}
+    requestAnimationFrame(tick)}
+  requestAnimationFrame(tick);
+  return{progress(p){real=Math.max(real,.6+.38*p)},finish(){real=1;target=1;done=true}}})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Nunito:wght@600;800&family=Pixelify+Sans:wght@400;600;700&family=Silkscreen:wght@400;700&display=swap">
 <style>
@@ -332,7 +376,7 @@ const R=Math.random;
 
 /* ---------- images ---------- */
 const IMG={};let loaded=0;const keys=Object.keys(SPR);
-keys.forEach(k=>{const i=new Image();i.onload=()=>{if(++loaded===keys.length)ready()};i.src=SPR[k];IMG[k]=i});
+keys.forEach(k=>{const i=new Image();i.onload=()=>{++loaded;try{SPLASH.progress(loaded/keys.length)}catch(e){}if(loaded===keys.length)ready()};i.src=SPR[k];IMG[k]=i});
 
 /* ---------- offscreen drawings ---------- */
 function oc(w,h,fn){const c=document.createElement("canvas");c.width=w;c.height=h;fn(c.getContext("2d"),w,h);return c}
@@ -796,7 +840,7 @@ function ready(){buildWorld();const b=$("play");b.disabled=false;b.textContent="
   const cast=$("cast");["p_idle","g_sly","o_excite","r_sulk"].forEach(k=>cast.appendChild(IMG[k].cloneNode()));
   document.querySelectorAll("img[data-hero]").forEach(im=>{im.src=SPR[im.dataset.hero]});
   document.querySelectorAll(".pc").forEach(b=>{b.onclick=()=>selectChar(b.dataset.ch);b.addEventListener("keydown",e=>{if(e.key==="ArrowRight"||e.key==="ArrowLeft"){e.preventDefault();const o=b.dataset.ch==="sucre"?"sale":"sucre";selectChar(o);document.querySelector(`.pc[data-ch="${o}"]`).focus()}})});selectChar(chKey);
-  cast.querySelectorAll("img").forEach(i=>i.alt="");requestAnimationFrame(loop)}
+  cast.querySelectorAll("img").forEach(i=>i.alt="");requestAnimationFrame(loop);try{SPLASH.finish()}catch(e){}}
 function askPseudo(){const inp=$("pseudo");const v=Scores.norm(inp.value),e=Scores.valid(v);$("pseudoErr").hidden=!e;$("pseudoErr").textContent=e;if(e){inp.focus();return false}
   pseudo=v;try{localStorage.setItem("gef_pseudo",pseudo)}catch(_){}return true}
 function start(){if(!pseudo&&!askPseudo())return;audio();engineStop();newGame();running=true;paused=false;$("startS").hidden=true;$("overS").hidden=true;$("hud").hidden=false;applyTouchUI();
