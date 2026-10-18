@@ -452,10 +452,10 @@ function buildWorld(){
     if(OBS.some(o=>Math.hypot(o.x-x,o.y-y)<125))continue;
     const s=.6+r()*.25,q=r(),v=q<.3?"pillar":q<.58?"dead":q<.8?"grave":"brazier";
     const d={x,y,r:(v==="brazier"?20:26)*s,kind:"tree",v,s,seed:r()*10};OBS.push(d);DECOR.push(d);
-    if(v==="brazier")LIGHTS.push({x,y:y-80*s,r:200,col:"255,130,40",a:.55,seed:d.seed})}
+    if(v==="brazier")LIGHTS.push({x,y:y-80*s,r:95,col:"255,130,40",a:.18,seed:d.seed})}
   const bspots=[[700,HP[0]-PW/2-22],[1600,HP[0]-PW/2-22],[300,HP[1]-PW/2-22],[2150,HP[2]-PW/2-22],[850,HP[2]-PW/2-22],[1650,HP[1]-PW/2-22],[1450,HP[2]-PW/2-22],[950,HP[1]-PW/2-22]];
   bspots.forEach(([x,y])=>{if(OBS.some(o=>Math.hypot(o.x-x,o.y-y)<120))return;const b={x,y,kind:"bench"};DECOR.push(b);OBS.push({x:x-38,y,r:22,kind:"bp"},{x,y,r:22,kind:"bp"},{x:x+38,y,r:22,kind:"bp"})});
-  for(let x=160;x<W;x+=320){TORCHES.push({x,y:30,seed:x});LIGHTS.push({x,y:30,r:150,col:"255,120,40",a:.45,seed:x})}
+  for(let x=160;x<W;x+=320){TORCHES.push({x,y:30,seed:x});LIGHTS.push({x,y:30,r:80,col:"255,120,40",a:.14,seed:x})}
   BG=pix(W,H,c=>{
     c.fillStyle="#241a22";c.fillRect(0,0,W,H);
     const dirt=["#2b1f27","#2f2329","#1f151c","#33262a","#28202c"];
@@ -698,8 +698,8 @@ function drawLights(tt,x0,y0,ww,hh){
   const g=ctx.createRadialGradient(cx,cy,150*zoom,cx,cy,Math.max(vw,vh)*.78);g.addColorStop(0,"rgba(12,5,22,0)");g.addColorStop(1,"rgba(12,5,22,.66)");ctx.fillStyle=g;ctx.fillRect(0,0,vw,vh);
   ctx.setTransform(k,0,0,k,ox,oy);ctx.globalCompositeOperation="lighter";
   for(const L of LIGHTS){if(L.x<x0-L.r||L.x>x0+ww+L.r||L.y<y0-L.r||L.y>y0+hh+L.r)continue;
-    const fl=L.lava?.85+Math.sin(tt*2)*.15:.8+Math.sin(tt*11+(L.seed||0))*.12+Math.sin(tt*17+(L.seed||0)*3)*.08;
-    const lg=ctx.createRadialGradient(L.x,L.y,0,L.x,L.y,L.r);lg.addColorStop(0,`rgba(${L.col},${L.a*fl})`);lg.addColorStop(1,`rgba(${L.col},0)`);ctx.fillStyle=lg;ctx.fillRect(L.x-L.r,L.y-L.r,L.r*2,L.r*2)}
+    const fl=L.lava?.85+Math.sin(tt*2)*.15:.9+Math.sin(tt*11+(L.seed||0))*.06+Math.sin(tt*17+(L.seed||0)*3)*.04;
+    const lg=ctx.createRadialGradient(L.x,L.y,0,L.x,L.y,L.r);lg.addColorStop(0,`rgba(${L.col},${L.a*fl})`);if(!L.lava)lg.addColorStop(.45,`rgba(${L.col},${L.a*fl*.3})`);lg.addColorStop(1,`rgba(${L.col},0)`);ctx.fillStyle=lg;ctx.fillRect(L.x-L.r,L.y-L.r,L.r*2,L.r*2)}
   ctx.globalCompositeOperation="source-over"}
 function draw(){
   ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle="#0d0912";ctx.fillRect(0,0,cvs.width,cvs.height);
