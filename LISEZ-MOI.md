@@ -8,6 +8,9 @@ Le dossier contient tout le site :
 | `config.js` | L'adresse et la clé de ta base Supabase (à remplir) |
 | `supabase.sql` | Le script qui crée la table des scores et le classement |
 | `icon.png` | L'icône du site (onglet, écran d'accueil du téléphone) |
+| `mp/img/` | Les poses à l'arbalète du mode Bataille |
+| `server/` | Le serveur du mode multijoueur (à héberger à part, voir plus bas) |
+| `render.yaml` | La configuration toute prête pour héberger ce serveur sur Render |
 
 Il faut environ 15 minutes, avec deux comptes gratuits : **Supabase** pour la base des scores et **Netlify** pour l'hébergement.
 
@@ -82,3 +85,60 @@ Ouvre l'adresse dans Chrome, puis **⋮ → Ajouter à l'écran d'accueil**. Le 
 - Tu peux voir toutes les parties dans Supabase → **Table Editor → scores**.
 
 **Bon à savoir sur l'offre gratuite de Supabase :** un projet sans aucune activité pendant 7 jours est mis en pause. Il suffit de le relancer d'un clic depuis le tableau de bord Supabase, et les scores sont conservés.
+
+---
+
+## Mode multijoueur « Bataille »
+
+Jusqu'à **10 joueurs** dans la même salle, sur la même carte, sans monstres et sans chrono. Chacun se bat à l'arbalète.
+
+**Règles**
+
+- 3 carreaux encaissés = K.O. Tu reviens 3 secondes plus tard, avec un bouclier de 2 secondes (il saute dès que tu tires).
+- Les friandises redonnent un cœur et remplissent la jauge. Le **prout** étourdit les adversaires autour de toi.
+- Le **café** donne un coup de boost et un **caca piégé** : l'adversaire qui marche dedans perd un cœur.
+- Le tableau en haut à droite classe les joueurs par K.O. Le 1er porte la 👑.
+- On rejoint une salle avec un **code** (par défaut `GAZ`). Donne le même code à tes potes pour être ensemble. Une salle pleine refuse le 11e joueur.
+
+**Commandes**
+
+- Ordinateur : ZQSD ou flèches pour courir, souris pour viser, clic pour tirer, Espace pour le prout, C pour le caca.
+- Téléphone : doigt à gauche pour courir, doigt à droite pour viser et tirer, bouton **TIR** pour le tir automatique sur l'adversaire le plus proche.
+
+### Pourquoi un serveur à part ?
+
+GitHub Pages et Netlify ne servent que des fichiers. Pour que 10 personnes jouent en direct, il faut un petit programme qui tourne en permanence et relaie les positions et les tirs. C'est le dossier `server/`. Supabase reste utilisé pour le classement du mode solo.
+
+### Héberger le serveur sur Render (gratuit, environ 10 minutes)
+
+1. Va sur https://render.com et crée un compte avec **GitHub**.
+2. Clique sur **New → Blueprint**, choisis le dépôt `alex-full-gaz`, puis **Apply**. Render lit `render.yaml` et crée le service `full-gaz-multi`.
+3. Attends la fin du déploiement (2 à 3 minutes). Render affiche l'adresse du service, par exemple `https://full-gaz-multi.onrender.com`.
+4. Ouvre cette adresse dans ton navigateur : le message « Full Gaz ! serveur multijoueur OK » doit s'afficher.
+5. Dans `config.js`, mets cette adresse en remplaçant `https://` par `wss://` :
+
+   ```js
+   multiUrl: "wss://full-gaz-multi.onrender.com"
+   ```
+
+6. Pousse la modification sur GitHub (et sur Netlify si tu l'utilises). Le bouton **Bataille multi** du menu marche alors.
+
+**Bon à savoir sur l'offre gratuite de Render**
+
+- Le serveur s'endort après 15 minutes sans joueur. Le premier qui lance une bataille le réveille, ce qui prend environ une minute : le jeu affiche « Le serveur se réveille… » et se connecte tout seul ensuite.
+- Les scores de bataille vivent dans la salle et repartent à zéro quand elle se vide ou que le serveur redémarre.
+
+### Tester chez toi
+
+```bash
+cd server
+npm install
+npm start                      # serveur sur le port 8080
+node bots.js 4                 # (optionnel) 4 robots qui se battent dans la salle GAZ
+```
+
+Puis ouvre le jeu depuis `http://localhost` (par exemple `npx serve .` à la racine) : en local, le jeu se branche tout seul sur `ws://localhost:8080`. Tu peux aussi forcer un serveur avec l'adresse `index.html?server=wss://…`.
+
+### Si tu modifies la carte
+
+Le serveur a sa propre copie des obstacles dans `server/world.js`, pour savoir où les carreaux s'arrêtent. Si tu changes la carte dans `index.html` (fonction `buildWorld`), reporte la modification dans ce fichier.

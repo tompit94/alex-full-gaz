@@ -1,0 +1,11 @@
+# Hébergement du serveur multijoueur sur Render (offre gratuite).
+# Render > New > Blueprint > choisis ce dépôt : tout se configure tout seul.
+services:
+  - type: web
+    name: full-gaz-multi
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /

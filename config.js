@@ -10,5 +10,9 @@
 
 window.GAME_CONFIG = {
   supabaseUrl: "https://cqcqwmecriwpypwnekzf.supabase.co",
-  supabaseKey: "sb_publishable_1Fx2nfJ1fd46LywJ8LXjAQ_EzDE7yyO"
+  supabaseKey: "sb_publishable_1Fx2nfJ1fd46LywJ8LXjAQ_EzDE7yyO",
+
+  // Adresse du serveur multijoueur (mode « Bataille »), voir LISEZ-MOI > Multijoueur.
+  // Exemple : "wss://full-gaz-multi.onrender.com"
+  multiUrl: ""
 };
