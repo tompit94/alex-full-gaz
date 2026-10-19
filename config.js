@@ -14,5 +14,5 @@ window.GAME_CONFIG = {
 
   // Adresse du serveur multijoueur (mode « Bataille »), voir LISEZ-MOI > Multijoueur.
   // Exemple : "wss://full-gaz-multi.onrender.com"
-  multiUrl: ""
+  multiUrl: "wss://full-gaz-multi.onrender.com"
 };
