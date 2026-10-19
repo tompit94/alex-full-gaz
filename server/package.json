@@ -1,0 +1,9 @@
+{
+  "name": "full-gaz-multi",
+  "version": "1.0.0",
+  "description": "Serveur multijoueur de Full Gaz ! (bataille à l'arbalète, 10 joueurs par salle)",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" },
+  "dependencies": { "ws": "^8.18.0" }
+}
