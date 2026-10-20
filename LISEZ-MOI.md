@@ -90,7 +90,11 @@ Ouvre l'adresse dans Chrome, puis **⋮ → Ajouter à l'écran d'accueil**. Le 
 
 ## Mode multijoueur « Bataille »
 
-Jusqu'à **10 joueurs** dans la même salle, sur la même carte, sans monstres et sans chrono. Chacun se bat à l'arbalète.
+Jusqu'à **10 joueurs** dans la même salle, sur la même carte, sans monstres. Chacun se bat à l'arbalète.
+
+- **Manches** : dès qu'il y a 2 joueurs, compte à rebours de 4 s, puis manche de 3 min. Le plus de K.O. gagne, ou le premier à 15. Podium pendant 10 s, puis nouvelle manche (scores remis à zéro).
+- **Super-pâtisseries dorées** (2 max sur la carte) : *Éclair foudroyant* = tir rapide 7 s, *Glace triple boule* = 3 carreaux en éventail 7 s, *Donut bouclier* = invulnérable 6 s.
+- Réglages dans `server/server.js` (objets `ROUND` et `POW`).
 
 **Règles**
 
@@ -134,6 +138,7 @@ GitHub Pages et Netlify ne servent que des fichiers. Pour que 10 personnes jouen
 cd server
 npm install
 npm start                      # serveur sur le port 8080
+ROUND_TIME=30 npm start        # (test) manches de 30 s au lieu de 3 min
 node bots.js 4                 # (optionnel) 4 robots qui se battent dans la salle GAZ
 ```
 
