@@ -685,7 +685,7 @@ function newGame(){
   S={t:0,score:0,eaten:0,kos:0,items:[],coffee:null,coffeeT:6,poops:[],clouds:[],parts:[],texts:[],mons:[],embers:[],spawnT:3,nextType:0,key:null,keyT:14+R()*8,car:0,carCombo:0,
     P:{x:1200,y:1060,vx:0,vy:0,r:22,face:1,hp:3,inv:0,anim:0,act:null,actT:0,gauge:0,cafe:0,boost:0,ang:0}};
   for(let i=0;i<14;i++)spawnItem();
-  spawnMon("p");spawnMon("g");S.appleT=300;
+  spawnMon("p");spawnMon("g");S.appleT=2;
   cam.x=S.P.x;cam.y=S.P.y;hud(true);
 }
 function freeSpot(minP=200){for(let k=0;k<200;k++){const x=80+R()*(W-160),y=90+R()*(H-170);
