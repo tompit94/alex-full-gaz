@@ -68,7 +68,7 @@ class Room {
   addPlayer(ws, name, ch) {
     const id = this.nextId++;
     const p = {
-      id, ws, name, ch: ["sucre", "sale", "italien"].includes(ch) ? ch : "sucre",
+      id, ws, name, ch: ["sucre", "sale", "italien", "mihide"].includes(ch) ? ch : "sucre",
       x: 0, y: 0, vx: 0, vy: 0, r: 22, a: 0, mv: 0,
       hp: R.hp, alive: true, deadT: 0, shield: R.spawnShield, stun: 0, boost: 0,
       gauge: 0, cafe: 0, cd: 0, kills: 0, deaths: 0, streak: 0, lastMove: Date.now(),
