@@ -214,7 +214,7 @@ class Room {
       const m = this.mons[i], T = MON[m.type];
       m.t += dt; m.ph += dt * 9; m.hitT = Math.max(0, m.hitT - dt); m.meleeT = Math.max(0, m.meleeT - dt);
       const kd = Math.pow(0.02, dt); m.kbx *= kd; m.kby *= kd;
-      if (m.st === "dead") { if (m.t > 0.9) this.mons.splice(i, 1); continue; }
+      if (m.st === "dead") { if (m.t > (m.type === "a" ? 2.4 : 0.9)) this.mons.splice(i, 1); continue; }  // le boss reste étendu au sol un moment
       if (m.st === "stun") {
         if (m.t > COOP.stun) { m.st = "chase"; m.t = 0; }
         const vd = Math.pow(0.05, dt); m.vx *= vd; m.vy *= vd;
