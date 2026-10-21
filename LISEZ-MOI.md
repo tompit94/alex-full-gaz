@@ -113,7 +113,7 @@ Jusqu'à **10 joueurs** dans la même salle, sur la même carte, sans monstres. 
 - **Super-pâtisseries dorées** (2 max sur la carte) : *Éclair foudroyant* = tir rapide 7 s, *Glace triple boule* = 3 carreaux en éventail 7 s, *Donut bouclier* = invulnérable 6 s.
 - **Pouvoir du perso** : chaque K.O. remplit la jauge, à 3 K.O. le pouvoir est prêt (touche **E** ou bouton POUVOIR) et dure 6 s :
   - Alex (voiture) et Nini (Vespa) : très rapides, renversent au contact, pas de tir, insensibles au prout ;
-  - Greg (machette), Arthur (gode), Gargar (Opinel), Mike (baguette), Yonarie (tournevis) : plus rapides, K.O. en un coup au contact ; Yonarie crie « QUOIIII » et étourdit autour d'elle ;
+  - Greg (machette), Arthur (gode), Gargar (Opinel), Mike (baguette), Tommy (ventouse), Yonarie (tournevis) : plus rapides, K.O. en un coup au contact ; Yonarie crie « QUOIIII » et étourdit autour d'elle ;
   - Mihide (bouclier) : invulnérable, renvoie les carreaux à l'envoyeur.
 - Réglages dans `server/server.js` (objets `ROUND`, `POW` et `SUPER`).
 

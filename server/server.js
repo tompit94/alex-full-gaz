@@ -32,13 +32,13 @@ const POW = {
 const POW_KINDS = Object.keys(POW), POW_MAX = 2;
 // Pouvoirs des persos : la jauge se remplit avec les K.O. (3 K.O. = pouvoir prêt), il dure 6 s
 //  ram   : véhicule (Alex = voiture, Nini = Vespa) — très rapide, renverse au contact, pas de tir, insensible au prout
-//  melee : arme blanche (Greg, Arthur, Gargar, Yonarie) — plus rapide, K.O. en un coup au contact, garde l'arbalète
+//  melee : arme blanche (Greg, Arthur, Gargar, Mike, Tommy, Yonarie) — plus rapide, K.O. en un coup au contact, garde l'arbalète
 //  guard : bouclier (Mihide) — invulnérable, renvoie les carreaux à l'envoyeur
 //  Yonarie crie en plus « QUOIIII » toutes les 1,5 s : étourdit les adversaires proches
 const SUPER = { need: 3, time: 6, ramR: 64, meleeR: 60, quoiR: 230, quoiEvery: 1.5,
   speed: { ram: 1.7, melee: 1.3, guard: 1.2 } };
 const TEST_SUPER = process.env.TEST_SUPER === "1"; // test : jauge pleine en permanence
-const SUPER_KIND = { sucre: "ram", italien: "ram", sale: "melee", arthur: "melee", gargar: "melee", mike: "melee", yonarie: "melee", mihide: "guard" };
+const SUPER_KIND = { sucre: "ram", italien: "ram", sale: "melee", arthur: "melee", gargar: "melee", mike: "melee", tommy: "melee", yonarie: "melee", mihide: "guard" };
 const superOf = p => (p.spT > 0 ? SUPER_KIND[p.ch] || "melee" : "");
 // Mode Coopération : tous ensemble contre des vagues de monstres
 //  - pas de tirs amis : carreaux, prouts, cacas et pouvoirs ne touchent que les monstres
@@ -103,7 +103,7 @@ class Room {
   addPlayer(ws, name, ch) {
     const id = this.nextId++;
     const p = {
-      id, ws, name, ch: ["sucre", "sale", "italien", "mihide", "yonarie", "arthur", "gargar", "mike"].includes(ch) ? ch : "sucre",
+      id, ws, name, ch: ["sucre", "sale", "italien", "mihide", "yonarie", "arthur", "gargar", "mike", "tommy"].includes(ch) ? ch : "sucre",
       x: 0, y: 0, vx: 0, vy: 0, r: 22, a: 0, mv: 0,
       hp: R.hp, alive: true, deadT: 0, shield: R.spawnShield, stun: 0, boost: 0,
       gauge: 0, cafe: 0, cd: 0, kills: 0, deaths: 0, streak: 0, lastMove: Date.now(),
