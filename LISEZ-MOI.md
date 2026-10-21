@@ -68,7 +68,8 @@ Ouvre l'adresse dans Chrome, puis **⋮ → Ajouter à l'écran d'accueil**. Le 
 
 - À l'accueil, chaque joueur tape un **pseudo**. Le téléphone ou le navigateur s'en souvient pour les fois suivantes.
 - Chaque partie est enregistrée avec son score, les friandises mangées, les monstres éliminés et la durée.
-- Le **classement** affiche le meilleur score de chaque pseudo et son nombre de parties. Il est visible depuis l'accueil (« Voir le classement ») et à la fin de chaque partie, avec la position du joueur.
+- Le **classement** affiche le meilleur score de chaque pseudo, le petit portrait du perso avec lequel il l'a fait, et son nombre de parties. Il est visible depuis l'accueil (« Voir le classement ») et à la fin de chaque partie, avec la position du joueur.
+- Le portrait du perso demande la colonne `perso` : relance `supabase.sql` en entier dans Supabase (SQL Editor → Run), c'est sans risque pour les scores existants. Les parties jouées avant n'ont pas de portrait.
 - Les majuscules ne comptent pas : « Turbo » et « turbo » sont le même joueur.
 - Tant que `config.js` n'est pas rempli, le jeu marche quand même et garde les scores **sur l'appareil** uniquement.
 
@@ -113,7 +114,7 @@ Jusqu'à **10 joueurs** dans la même salle, sur la même carte, sans monstres. 
 - **Super-pâtisseries dorées** (2 max sur la carte) : *Éclair foudroyant* = tir rapide 7 s, *Glace triple boule* = 3 carreaux en éventail 7 s, *Donut bouclier* = invulnérable 6 s.
 - **Pouvoir du perso** : chaque K.O. remplit la jauge, à 3 K.O. le pouvoir est prêt (touche **E** ou bouton POUVOIR) et dure 6 s :
   - Alex (voiture) et Nini (Vespa) : très rapides, renversent au contact, pas de tir, insensibles au prout ;
-  - Greg (machette), Arthur (gode), Gargar (Opinel), Mike (baguette), Tommy (ventouse), Yonarie (tournevis) : plus rapides, K.O. en un coup au contact ; Yonarie crie « QUOIIII » et étourdit autour d'elle ;
+  - Greg (machette), Arthur (gode), Gargar (Opinel), Mike (baguette), Tommy (ventouse), Yonarie (tournevis) : plus rapides, K.O. en un coup au contact ; Yonarie crie « Quoiiiiiiiii !? » et étourdit autour d'elle ;
   - Mihide (bouclier) : invulnérable, renvoie les carreaux à l'envoyeur.
 - Réglages dans `server/server.js` (objets `ROUND`, `POW` et `SUPER`).
 

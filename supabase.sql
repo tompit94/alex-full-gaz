@@ -24,6 +24,11 @@ create table if not exists public.scores (
                               and duration_s between 0 and 7200)
 );
 
+-- perso joué pendant la partie (ajouté après coup : sans risque sur une base existante)
+alter table public.scores add column if not exists perso text;
+alter table public.scores drop constraint if exists perso_ok;
+alter table public.scores add constraint perso_ok check (perso is null or perso ~ '^[a-z]{2,16}$');
+
 create index if not exists scores_pseudo_idx on public.scores (pseudo_key, score desc);
 create index if not exists scores_score_idx  on public.scores (score desc);
 
@@ -50,9 +55,10 @@ select b.pseudo_key,
        b.score        as best,
        s.games,
        s.total_kos,
-       s.last_play
+       s.last_play,
+       b.perso        -- perso du meilleur score
 from (
-  select distinct on (pseudo_key) pseudo_key, pseudo, score
+  select distinct on (pseudo_key) pseudo_key, pseudo, score, perso
   from public.scores
   order by pseudo_key, score desc, created_at asc
 ) b
