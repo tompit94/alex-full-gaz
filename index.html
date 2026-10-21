@@ -367,6 +367,14 @@ body.mpPw #mpTimer{top:calc(150px + env(safe-area-inset-top,0px))}
   #mpBoard{top:calc(108px + env(safe-area-inset-top,0px))}
   #mpFeed{top:calc(128px + env(safe-area-inset-top,0px))}
 }
+@media (max-width:619px),(pointer:coarse){
+  .toast{font-size:13px;padding:4px 10px 2px;border-width:2px;max-width:min(78vw,340px);white-space:normal}
+  #mpFeed{font-size:10px;gap:2px}
+  #mpFeed div{max-width:46vw;padding:2px 5px;background:rgba(13,9,18,.5)}
+  #mpBoard{font-size:10px;min-width:0;padding:3px 5px}
+  #mpBoard .r span:first-child{max-width:80px}
+  #mpRound{font-size:clamp(40px,12vw,72px)}
+}
 </style>
 
 <canvas id="game" aria-label="Jeu Full Gaz !"></canvas>
@@ -917,8 +925,9 @@ function spawnKey(){const P=S.P;let best=null;
     if(OBS.some(o=>Math.hypot(o.x-x,o.y-y)<o.r+40))continue;if(S.mons.some(m=>Math.hypot(m.x-x,m.y-y)<120))continue;best={x,y};break}
   if(!best)best=freeSpot(300);S.key={...best,ph:0,life:20,max:20};
   tone(880,880,.12,"triangle",.12);tone(1175,1175,.12,"triangle",.12,.12);tone(1568,1568,.25,"triangle",.12,.24);
-  toast(PWX().appear);puff(best.x,best.y-30,"#ffe27a",14)}
-let toastT=null;function toast(s){const el=$("toast");el.textContent=s;el.hidden=false;el.classList.remove("show");void el.offsetWidth;el.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>{el.hidden=true},3200)}
+  toast(PWX().appear.replace(/ ! Suis la flèche dorée$/," !"));puff(best.x,best.y-30,"#ffe27a",14)}
+const phone=()=>touchMode||vw<620;
+let toastT=null;function toast(s){const el=$("toast");el.textContent=s;el.hidden=false;el.classList.remove("show");void el.offsetWidth;el.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>{el.hidden=true},phone()?2000:2800)}
 function startCar(){const P=S.P;S.car=15;S.carCombo=0;S.key=null;S.keyT=30+R()*15;P.act=null;P.actT=0;P.r=isCar()?36:isVespa()?30:24;P.inv=0;cam.shake=10;
   if(isCar()||isVespa()){SFX.horn();engineStart();if(ENG)ENG.mul=isVespa()?1.9:1}else SFX.hammerUp();P.lookT=0;P.quoiT=.4;
   puff(P.x,P.y-30,"#ffffff",18);txt(P.x,P.y-120,PWX().label,"#ffcf3a");hud()}
@@ -957,13 +966,13 @@ function update(dt){
   else{S.coffee.ph+=dt;if(Math.hypot(S.coffee.x-P.x,S.coffee.y-(P.y-20))<46){S.coffee=null;S.coffeeT=9+R()*7;P.cafe=Math.min(3,P.cafe+1);P.boost=4;SFX.cafe();txt(P.x,P.y-110,"CAFÉ ! CACA DISPO","#ffb36b");hud()}}
   // key
   if(!S.key){if(S.car<=0){S.keyT-=dt;if(S.keyT<=0)spawnKey()}}
-  else{S.key.ph+=dt;S.key.life-=dt;if(S.key.life<=0){puff(S.key.x,S.key.y-20,"#ffe27a",8);S.key=null;S.keyT=18+R()*10;toast(PWX().gone)}
+  else{S.key.ph+=dt;S.key.life-=dt;if(S.key.life<=0){puff(S.key.x,S.key.y-20,"#ffe27a",8);S.key=null;S.keyT=18+R()*10}
     else if(Math.hypot(S.key.x-P.x,S.key.y-(P.y-20))<50)startCar()}
   if(S.car>0){const s=Math.ceil(S.car);if($("carS").textContent!=s)$("carS").textContent=s;$("carBar").style.transform=`scaleX(${S.car/15})`}
   // spawn monsters
   S.spawnT-=dt;const maxM=Math.min(13,3+Math.floor(S.t/22));
   if(S.spawnT<=0){if(S.mons.length<maxM){spawnMon("pgor"[S.nextType++%4])}S.spawnT=Math.max(4,10-S.t/40)}
-  if(!S.mons.some(m=>m.type==="a")){S.appleT-=dt;if(S.appleT<=0){spawnMon("a");S.appleT=60+R()*40;toast("Un drôle de type croque sa pomme dans le coin… Ne t'approche pas trop !")}}
+  if(!S.mons.some(m=>m.type==="a")){S.appleT-=dt;if(S.appleT<=0){spawnMon("a");S.appleT=60+R()*40;toast("Attention : le croqueur de pomme rôde !")}}
   // monsters
   for(let i=S.mons.length-1;i>=0;i--){const m=S.mons[i],T=MT[m.type];m.t+=dt;m.ph+=dt*9;m.pop=Math.max(0,m.pop-dt);
     m.kb.x*=Math.pow(.02,dt);m.kb.y*=Math.pow(.02,dt);
@@ -1324,7 +1333,7 @@ function mpStart(ws,m){
   $("mpS").hidden=true;$("startS").hidden=true;$("overS").hidden=true;$("hud").hidden=false;$("mpBoard").hidden=false;$("mpFeed").hidden=false;$("mpFeed").replaceChildren();$("mpTimer").hidden=false;$("spw").hidden=false;
   $("score").parentElement.firstChild.textContent="K.O. ";$("carT").hidden=true;
   $("pauseT").textContent="Menu";$("pauseHint").hidden=false;$("quitMP").hidden=false;$("mpInvite").hidden=false;$("mpRoomInfo").hidden=false;$("mpInviteMsg").hidden=true;
-  applyTouchUI();mpHud();feed(`Tu entres dans la salle <b>${esc(MP.room)}</b>${MP.priv?" 🔒":""} · ${MP.coop?"🤝 Coopération":"⚔️ Chacun pour soi"}`);feed(`Invite tes potes : menu ${touchMode?"II":"(Échap)"} → Inviter`);
+  applyTouchUI();mpHud();feed(`Tu entres dans la salle <b>${esc(MP.room)}</b>${MP.priv?" 🔒":""} · ${MP.coop?"🤝 Coopération":"⚔️ Chacun pour soi"}`);
   $("mpRoomInfo").textContent=`Salle ${MP.room} · ${MP.coop?"🤝 Coopération":"⚔️ Chacun pour soi"}${MP.priv?" · 🔒 privée":""}`;
   if(mode!==mpMode)toast(`La salle ${MP.room} est en mode « ${MODE_LABEL[mode]} »`);
   if(touchMode&&document.documentElement.requestFullscreen&&!document.fullscreenElement){document.documentElement.requestFullscreen().catch(()=>{})}}
@@ -1335,7 +1344,7 @@ function mpQuit(){mpCleanup();$("startS").hidden=false;$("openMP").focus()}
 function mpLost(){mpCleanup();openMP();const msg=$("mpMsg");msg.className="save bad";msg.textContent="Connexion perdue. Tu peux rejoindre à nouveau."}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function send(o){if(MP&&MP.ws.readyState===1)MP.ws.send(JSON.stringify(o))}
-function feed(html){const f=$("mpFeed");const d=document.createElement("div");d.innerHTML=html;f.prepend(d);while(f.children.length>4)f.lastChild.remove();setTimeout(()=>d.remove(),6000)}
+function feed(html){const f=$("mpFeed");const d=document.createElement("div");d.innerHTML=html;f.prepend(d);while(f.children.length>(phone()?2:3))f.lastChild.remove();setTimeout(()=>d.remove(),phone()?3500:4500)}
 const nameOf=id=>{const r=MP&&MP.roster.get(id);return r?r.name:"?"};
 
 /* ---------- messages du serveur ---------- */
@@ -1378,7 +1387,7 @@ function mpEvent(e){const me=MP.id,P=MP.me;
       if((e.kind==="ram"||e.kind==="melee")&&v){const pl=PWR[supOf(chOf(e.by)).pwr]||{};txt(v.x,v.y-110,(pl.hit||"BAM ! +").replace(/\s*\+$/,""),"#ff9a4d");burst(v.x,v.y-40,"#ffe066",14,300);if(e.kind==="ram")atPos(v,SFX.squash);else atPos(v,SFX.bonk)}
       if(e.by&&e.by!==e.id)feed(`<b>${esc(nameOf(e.by))}</b> <span class="k">${how}</span> ${esc(nameOf(e.id))}`);else feed(`${esc(nameOf(e.id))} <span class="k">est K.O.</span>`);
       if(e.id===me){MP.killedBy=e.by;SFX.down();cam.shake=16}
-      if(e.by===me&&e.id!==me){SFX.ko();if(v)txt(v.x,v.y-160,"K.O. !","#ffcf3a");if(e.streak>=3)toast(e.streak>=5?"Inarrêtable ! "+e.streak+" K.O. d'affilée":"Série de "+e.streak+" K.O. !")}
+      if(e.by===me&&e.id!==me){SFX.ko();if(v)txt(v.x,v.y-160,"K.O. !","#ffcf3a");if(e.streak>=3&&v)txt(v.x,v.y-200,"SÉRIE ×"+e.streak,"#ff9fd6")}
       break}
     case "spawn":if(e.id===me){Object.assign(P,{x:e.x,y:e.y,vx:0,vy:0,kbx:0,kby:0,sn:e.sn,alive:true,act:"",actT:0});MP.killedBy=0}puff(e.x,e.y-30,"#ffffff",14);break;
     case "eat":puff(e.x,e.y-10,"#ffe9a8",6);if(e.id===me){SFX.eat();txt(e.x,e.y-30,e.heal?"+1 ♥":"MIAM","#ff8fa0");if(e.full){txt(P.x,P.y-130,"PROUT PRÊT !","#b5f25b");tone(600,1200,.25,"triangle",.1,.12)}}break;
@@ -1390,15 +1399,15 @@ function mpEvent(e){const me=MP.id,P=MP.me;
     case "cafe":if(e.id===me){SFX.cafe();txt(P.x,P.y-130,"CAFÉ ! CACA DISPO","#ffb36b")}break;
     case "thunk":burst(e.x,e.y-58,"#b9a58c",5,90);atPos(e,SFX.thunk);break;
     case "block":txt(e.x,e.y-130,"BOUCLIER","#7fd4ff");break;
-    case "join":if(e.id!==me)feed(`<b>${esc(e.name)}</b> entre dans la bataille`);break;
-    case "pwspawn":{const d=mpw(e.p);if(d)feed(`✨ <b>${esc(d.name)}</b> apparaît !`);break}
+    case "join":if(e.id!==me)feed(`<b>${esc(e.name)}</b> arrive`);break;
+    case "pwspawn":{const d=mpw(e.p);break}
     case "power":{const d=mpw(e.p);if(!d)break;burst(e.x,e.y-30,d.col,16,260);
-      if(e.id===me){tone(500,1400,.3,"triangle",.12);tone(800,1800,.25,"triangle",.1,.12);txt(P.x,P.y-130,d.label+" !",d.col);toast(d.name+" : "+d.label.toLowerCase()+" pendant "+d.time+" s")}
-      else{atPos(posOf(e.id),SFX.eat);feed(`<b>${esc(nameOf(e.id))}</b> prend ${esc(d.name)}`)}break}
-    case "superok":if(e.id===me){txt(P.x,P.y-150,"POUVOIR PRÊT !","#ffe066");[660,880,1100].forEach((f,i)=>tone(f,f,.12,"triangle",.1,i*.09));toast(touchMode?"Pouvoir prêt ! Appuie sur POUVOIR":"Pouvoir prêt ! Appuie sur E")}break;
+      if(e.id===me){tone(500,1400,.3,"triangle",.12);tone(800,1800,.25,"triangle",.1,.12);txt(P.x,P.y-130,d.label+" !",d.col)}
+      else atPos(posOf(e.id),SFX.eat);break}
+    case "superok":if(e.id===me){txt(P.x,P.y-150,"POUVOIR PRÊT !","#ffe066");[660,880,1100].forEach((f,i)=>tone(f,f,.12,"triangle",.1,i*.09))}break;
     case "super":{const o=posOf(e.id),c=supOf(chOf(e.id)),pl=PWR[c.pwr]||{};if(o){burst(o.x,o.y-50,"#ffe066",22,320);puff(o.x,o.y-30,"#ffffff",14)}
-      if(e.id===me){cam.shake=12;tone(300,900,.35,"sawtooth",.1);tone(600,1800,.3,"square",.06,.1);txt(P.x,P.y-150,pl.label||"POUVOIR !","#ffe066");toast((pl.label||"POUVOIR").replace(/ !$/,"")+" : "+(MP.coop&&c.k==="guard"?"invulnérable, K.O. au contact":supDesc[c.k])+" pendant "+((MP.rules.sup||{}).time||6)+" s")}
-      else{atPos(o,()=>tone(300,900,.3,"sawtooth",.08));feed(`<b>${esc(nameOf(e.id))}</b> active son pouvoir : <span class="k">${esc((pl.label||"POUVOIR").replace(/ !$/,""))}</span>`)}break}
+      if(e.id===me){cam.shake=12;tone(300,900,.35,"sawtooth",.1);tone(600,1800,.3,"square",.06,.1);txt(P.x,P.y-150,pl.label||"POUVOIR !","#ffe066")}
+      else atPos(o,()=>tone(300,900,.3,"sawtooth",.08));break}
     case "superend":if(e.id===me){const pl=PWR[supOf(chKey).pwr]||{};txt(P.x,P.y-130,pl.end||"Fin du pouvoir","#fff6e0")}break;
     case "quoi":mpQuoi(posOf(e.id));break;
     case "reflect":{txt(e.x,e.y-130,"RENVOYÉ !","#ffe066");atPos(e,SFX.tic);break}
@@ -1409,12 +1418,12 @@ function mpEvent(e){const me=MP.id,P=MP.me;
       if(e.kind==="ram"||e.kind==="melee"||e.kind==="guard"){const pl=PWR[supOf(chOf(e.by)).pwr]||{};txt(e.x,e.y-110,(pl.hit||"BAM ! +").replace(/\s*\+$/,""),"#ff9a4d");burst(e.x,e.y-40,"#ffe066",14,300);atPos(e,e.kind==="ram"?SFX.squash:SFX.bonk)}
       else if(e.kind==="poop")txt(e.x,e.y-110,"PIÉGÉ !","#ffb36b");
       if(boss){cam.shake=14;feed(`<b>${esc(nameOf(e.by))}</b> <span class="k">terrasse</span> le croqueur de pomme !`);[523,659,784].forEach((f,i)=>tone(f,f,.18,"triangle",.11,i*.12))}
-      if(e.by===me){SFX.ko();txt(e.x,e.y-150,boss?"BOSS K.O. !":"K.O. !","#ffcf3a");if(e.streak>=5&&e.streak%5===0)toast("Série de "+e.streak+" monstres !")}else atPos(e,SFX.ko);break}
+      if(e.by===me){SFX.ko();txt(e.x,e.y-150,boss?"BOSS K.O. !":"K.O. !","#ffcf3a");if(e.streak>=5&&e.streak%5===0)txt(e.x,e.y-200,"SÉRIE ×"+e.streak,"#ff9fd6")}else atPos(e,SFX.ko);break}
     case "mstun":{const o=MP.mons.get(e.id);if(o)o.pop=.3;break}
     case "laugh":{const o=MP.mons.get(e.id);if(o){txt(o.x,o.y-130,"HA HA HA !","#ff5a3a");atPos(o,SFX.laugh)}break}
-    case "boss":toast("Le croqueur de pomme débarque… visez-le tous ensemble !");SFX.laugh();break;
-    case "wave":MP.wave=e.n;SFX.horn();mpRoundFlash(String(e.n),"Vague · "+(e.boss?"avec le croqueur de pomme !":e.tot+" monstres"));feed(`Vague <b>${e.n}</b> : ${e.tot} monstres${e.boss?" dont le croqueur de pomme":""}`);break;
-    case "wclear":[523,659,784,1047].forEach((f,i)=>tone(f,f*1.01,.18,"triangle",.12,i*.12));mpRoundFlash("BRAVO","Vague "+e.n+" nettoyée");feed("Vague nettoyée : les K.O. reviennent !");break;
+    case "boss":toast("Le croqueur de pomme débarque !");SFX.laugh();break;
+    case "wave":MP.wave=e.n;SFX.horn();mpRoundFlash(String(e.n),"Vague · "+(e.boss?"avec le croqueur de pomme !":e.tot+" monstres"));break;
+    case "wclear":[523,659,784,1047].forEach((f,i)=>tone(f,f*1.01,.18,"triangle",.12,i*.12));mpRoundFlash("BRAVO","Vague "+e.n+" nettoyée");break;
     case "rgo":tone(400,900,.18,"square",.12);tone(900,1500,.3,"square",.12,.15);mpRoundFlash("GO !","Manche "+e.n);break;
     case "rend":{MP.endWhy=e.why;MP.winner=e.win;if(e.wave!==undefined&&MP.coop)MP.wave=e.wave;if(MP.coop){SFX.over();cam.shake=6;break}const iw=e.win===me;
       if(iw){[523,659,784,1047].forEach((f,i)=>tone(f,f*1.01,.22,"triangle",.13,i*.14))}else{tone(700,350,.5,"square",.1)}
@@ -1576,7 +1585,7 @@ function showPodium(pod){const sig=JSON.stringify(pod);if(sig===MP.podSig)return
   $("mpPodium").hidden=false;if(first&&mi===0)cam.shake=12}
 function mpRanking(){return[...MP.roster.entries()].sort((a,b)=>b[1].kills-a[1].kills||a[1].deaths-b[1].deaths)}
 function renderMpBoard(){if(!MP)return;const rows=mpRanking();MP.leader=rows.length>1&&rows[0][1].kills>0&&(rows.length<2||rows[0][1].kills>rows[1][1].kills)?rows[0][0]:0;
-  const narrow=vw<620;let shown=rows;if(narrow&&rows.length>5){const mi=rows.findIndex(r=>r[0]===MP.id);shown=rows.slice(0,4);if(mi>=4)shown.push(rows[mi]);else shown=rows.slice(0,5)}
+  const narrow=vw<620,cap=narrow?(MP.coop?3:5):99;let shown=rows;if(rows.length>cap){const mi=rows.findIndex(r=>r[0]===MP.id);shown=rows.slice(0,cap-1);if(mi>=cap-1)shown.push(rows[mi]);else shown=rows.slice(0,cap)}
   const sig=JSON.stringify(shown)+MP.ping+MP.wave;if(sig===MP.boardSig)return;MP.boardSig=sig;
   const b=$("mpBoard");b.innerHTML=`<div class="hd"><span>Salle ${esc(MP.room)}${MP.priv?" 🔒":""} · ${MP.coop?"🤝 vague "+MP.wave:rows.length+"/"+MP.max}</span><span>${MP.coop?"Mon. / M":"K / M"}</span></div>`+
     shown.map(([id,r])=>{const o=id===MP.id?MP.me:MP.others.get(id);const dead=o&&(id===MP.id?!o.alive:!(o.f&1));
