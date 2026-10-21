@@ -68,8 +68,9 @@ function cleanRoom(s) {
 
 /* ---------- salle ---------- */
 class Room {
-  constructor(code, mode) {
+  constructor(code, mode, priv) {
     this.code = code;
+    this.priv = !!priv;          // salle privée : absente de la liste, on la rejoint avec le code ou un lien
     this.mode = MODES.includes(mode) ? mode : "versus";
     this.coop = this.mode === "coop";
     this.mons = []; this.queue = []; this.wave = 0; this.spawnT = 0; this.monSpeed = 1;
@@ -642,7 +643,9 @@ const server = http.createServer((req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   if (req.url.startsWith("/rooms")) {
     res.setHeader("Content-Type", "application/json");
-    res.end(JSON.stringify([...rooms.values()].map(r => ({ code: r.code, n: r.players.size, max: MAX_PLAYERS, phase: r.phase, mode: r.mode, wave: r.wave }))));
+    // salles publiques seulement, avec l'état de la partie et les pseudos des joueurs
+    res.end(JSON.stringify([...rooms.values()].filter(r => !r.priv).map(r => ({ code: r.code, n: r.players.size, max: MAX_PLAYERS, phase: r.phase, mode: r.mode, wave: r.wave, round: r.round,
+      names: [...r.players.values()].map(p => p.name) }))));
     return;
   }
   res.setHeader("Content-Type", "text/plain; charset=utf-8");
@@ -670,14 +673,14 @@ wss.on("connection", ws => {
       const code = cleanRoom(m.room);
       room = rooms.get(code);
       // la salle garde le mode choisi par celui qui l'a créée
-      if (!room) { room = new Room(code, m.mode); rooms.set(code, room); }
+      if (!room) { room = new Room(code, m.mode, m.priv); rooms.set(code, room); }
       if (room.players.size >= MAX_PLAYERS) {
         ws.send(JSON.stringify({ t: "full", room: code, max: MAX_PLAYERS }));
         if (!room.players.size) rooms.delete(code);
         room = null; return;
       }
       me = room.addPlayer(ws, name, m.ch);
-      ws.send(JSON.stringify({ t: "welcome", id: me.id, room: code, x: me.x, y: me.y, max: MAX_PLAYERS, mode: room.mode, rules: { mode: room.mode, coop: room.coop ? COOP : null, round: ROUND, pow: POW, sup: Object.assign({}, SUPER, { need: room.supNeed() }), hp: R.hp, fireCd: R.fireCd, boltSpeed: R.boltSpeed, boltLife: R.boltLife, speed: R.speed, boost: R.boost, cloudR: R.cloudR, cloudLife: R.cloudLife, poopLife: R.poopLife, respawn: room.coop ? COOP.respawn : R.respawn } }));
+      ws.send(JSON.stringify({ t: "welcome", id: me.id, room: code, x: me.x, y: me.y, max: MAX_PLAYERS, mode: room.mode, priv: room.priv, rules: { mode: room.mode, coop: room.coop ? COOP : null, round: ROUND, pow: POW, sup: Object.assign({}, SUPER, { need: room.supNeed() }), hp: R.hp, fireCd: R.fireCd, boltSpeed: R.boltSpeed, boltLife: R.boltLife, speed: R.speed, boost: R.boost, cloudR: R.cloudR, cloudLife: R.cloudLife, poopLife: R.poopLife, respawn: room.coop ? COOP.respawn : R.respawn } }));
       room.broadcast(room.roster());
       return;
     }

@@ -289,6 +289,16 @@ html,body{height:100%;overflow:hidden;background:#2f6b2a;color:var(--ink);font-f
 .md:focus-visible{outline:2px dashed #7fd4ff;outline-offset:3px}
 @media (max-width:420px){.md .ic{font-size:18px}.md b{font-size:11px}.md small{font-size:11px}}
 .mprooms li .mo{font-family:var(--pixbody);font-size:12px;color:#7fd4ff;margin-left:6px}
+.mprooms li .rl{min-width:0;display:flex;flex-direction:column;gap:1px}
+.mprooms li .rs{font-size:12px;color:var(--parch)}.mprooms li .rs.on::before{content:"● ";color:#7ed957}
+.mprooms li .rn{font-size:11px;color:var(--mist);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mprooms li>span:last-child{flex:none;align-self:center}
+.mprow{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.priv{display:flex;gap:8px;align-items:center;text-align:left;font-family:var(--pixbody);font-size:14px;color:var(--parch);cursor:pointer;flex:1 1 200px}
+.priv input{width:20px;height:20px;accent-color:#7fd4ff;flex:none}
+.priv small{display:block;font-size:11px;color:var(--mist)}
+.mprow .mi,.mpinv{font-size:14px;padding:8px 12px 8px 28px;border:2px solid #3a2d52}
+.mpinv{display:block;margin:4px auto 0}
 /* jauge de pouvoir (K.O.) */
 #spw{margin-top:6px;font-family:var(--pix);font-weight:700;font-size:clamp(11px,2.6vw,14px);color:#ff9fd6;display:flex;align-items:center;gap:5px;white-space:nowrap}
 #spw i{width:clamp(14px,3.4vw,20px);height:clamp(10px,2.2vw,13px);border:2px solid #07040b;background:#3b2a1d;border-radius:2px;display:inline-block}
@@ -477,7 +487,11 @@ body.mpPw #mpTimer{top:calc(150px + env(safe-area-inset-top,0px))}
     <p class="hint" id="mpCtrl"></p>
     <p class="hint" id="mpModeHint">Une salle garde le mode choisi par celui qui l'a créée.</p>
     <div class="field"><label for="mpRoom">Code de la salle</label><input id="mpRoom" maxlength="8" autocomplete="off" spellcheck="false" placeholder="GAZ"></div>
-    <div class="boardhead"><span>Salles ouvertes</span><span>joueurs</span></div>
+    <div class="mprow">
+      <label class="priv"><input type="checkbox" id="mpPriv"><span>🔒 Salle privée<small>cachée de la liste : on entre avec le code ou ton lien</small></span></label>
+      <button class="mi" id="mpCreate" type="button">Créer une salle</button>
+    </div>
+    <div class="boardhead"><span>Salles publiques</span><span>joueurs</span></div>
     <ul class="mprooms" id="mpRooms"></ul>
     <p class="save" id="mpMsg"></p>
     <button class="btn" id="mpJoin">Rejoindre</button>
@@ -486,7 +500,7 @@ body.mpPw #mpTimer{top:calc(150px + env(safe-area-inset-top,0px))}
 </div>
 
 <div class="screen" id="pauseS" hidden>
-  <div class="card"><h2 class="title" id="pauseT">Pause</h2><p class="hint" id="pauseHint" hidden>La bataille continue pendant ce temps !</p><button class="btn" id="resume">Reprendre</button><button class="link" id="quitMP" type="button" hidden>Quitter la bataille</button></div>
+  <div class="card"><h2 class="title" id="pauseT">Pause</h2><p class="hint" id="pauseHint" hidden>La partie continue pendant ce temps !</p><p class="hint" id="mpRoomInfo" hidden></p><button class="btn" id="resume">Reprendre</button><button class="mi mpinv" id="mpInvite" type="button" hidden>📨 Inviter des potes</button><p class="hint" id="mpInviteMsg" hidden></p><button class="link" id="quitMP" type="button" hidden>Quitter la partie</button></div>
 </div>
 
 <script>
@@ -1098,7 +1112,9 @@ function ready(){buildWorld();const b=$("play");b.disabled=false;b.textContent="
   const cast=$("cast");["p_idle","g_sly","o_excite","r_sulk"].forEach(k=>cast.appendChild(IMG[k].cloneNode()));
   document.querySelectorAll("img[data-hero]").forEach(im=>{im.src=SPR[im.dataset.hero]});
   document.querySelectorAll(".pc").forEach(b=>{b.onclick=()=>selectChar(b.dataset.ch);b.addEventListener("keydown",e=>{if(e.key==="ArrowRight"||e.key==="ArrowLeft"){e.preventDefault();const ks=Object.keys(CHARS),o=ks[(ks.indexOf(b.dataset.ch)+(e.key==="ArrowRight"?1:ks.length-1))%ks.length];selectChar(o);document.querySelector(`.pc[data-ch="${o}"]`).focus()}})});selectChar(chKey);
-  cast.querySelectorAll("img").forEach(i=>i.alt="");requestAnimationFrame(loop);try{SPLASH.finish()}catch(e){}}
+  cast.querySelectorAll("img").forEach(i=>i.alt="");requestAnimationFrame(loop);try{SPLASH.finish()}catch(e){}
+  // arrivé par un lien d'invitation : direction la salle (après avoir choisi un pseudo si besoin)
+  if(invite){if(pseudo)openMP();else{const e=$("pseudoErr");e.textContent=`Choisis ton pseudo puis appuie sur Multijoueur pour rejoindre la salle ${invite.room}.`;e.hidden=false;$("pseudo").focus()}}}
 function askPseudo(){const inp=$("pseudo");const v=Scores.norm(inp.value),e=Scores.valid(v);$("pseudoErr").hidden=!e;$("pseudoErr").textContent=e;if(e){inp.focus();return false}
   pseudo=v;try{localStorage.setItem("gef_pseudo",pseudo)}catch(_){}return true}
 function start(){if(!pseudo&&!askPseudo())return;audio();engineStop();newGame();running=true;paused=false;$("startS").hidden=true;$("overS").hidden=true;$("hud").hidden=false;applyTouchUI();
@@ -1127,7 +1143,7 @@ async function renderBoard(ol,limit){ol.replaceChildren();const li0=document.cre
   const me=ol.querySelector(".me");if(me&&ol===$("fullBoard"))me.scrollIntoView({block:"nearest"})}
 function openBoard(){$("boardS").hidden=false;$("boardWho").innerHTML="";const w=$("boardWho");
   w.textContent=Scores.online?"Les meilleurs scores de tous les joueurs.":"Classement local : scores joués sur cet appareil.";renderBoard($("fullBoard"),50);$("closeBoard").focus()}
-function setPause(p){if(MP){$("pauseS").hidden=!p;joy.on=false;MP.aim.on=false;MP.fireHeld=false;keysDown.clear();return}if(!running)return;paused=p;$("pauseS").hidden=!p;joy.on=false;keysDown.clear()}
+function setPause(p){if(MP){$("pauseS").hidden=!p;$("mpInviteMsg").hidden=true;joy.on=false;MP.aim.on=false;MP.fireHeld=false;keysDown.clear();return}if(!running)return;paused=p;$("pauseS").hidden=!p;joy.on=false;keysDown.clear()}
 $("play").onclick=()=>{if(askPseudo())start()};$("again").onclick=start;
 $("pseudo").value=pseudo;$("pseudo").addEventListener("input",()=>{$("pseudoErr").hidden=true});$("pseudo").addEventListener("keydown",e=>{if(e.key!=="ArrowUp"&&e.key!=="ArrowDown")e.stopPropagation();if(e.key==="Enter"&&!$("play").disabled)$("play").click()});
 $("openBoard").onclick=openBoard;
@@ -1182,6 +1198,19 @@ const mpw=k=>{const d=MPW[k];if(!d)return null;const sv=MP&&MP.rules.pow&&MP.rul
 /* ---------- écran « Multijoueur » ---------- */
 let roomsTimer=null,mpMode="versus";try{if(localStorage.getItem("gef_mpmode")==="coop")mpMode="coop"}catch(e){}
 const MODE_LABEL={versus:"Chacun pour soi",coop:"Coopération"};
+// lien d'invitation : ?salle=CODE (&mode=coop, &prive=1) ouvre directement la bonne salle
+let invite=null;try{const q=new URLSearchParams(location.search),c=q.get("salle");if(c)invite={room:cleanRoom(c),mode:q.get("mode")==="coop"?"coop":"versus",priv:q.get("prive")==="1"}}catch(e){}
+function inviteUrl(){const u=new URL(location.href);u.search="";u.hash="";let sv=null;try{sv=new URLSearchParams(location.search).get("server")}catch(e){}
+  if(sv)u.searchParams.set("server",sv);u.searchParams.set("salle",MP.room);if(MP.coop)u.searchParams.set("mode","coop");if(MP.priv)u.searchParams.set("prive","1");return u.toString()}
+async function shareInvite(){if(!MP)return;const url=inviteUrl(),msg=$("mpInviteMsg"),text=`Rejoins-moi sur Full Gaz ! Salle ${MP.room} (${MODE_LABEL[MP.mode]})`;
+  if(navigator.share&&touchMode){try{await navigator.share({title:"Full Gaz !",text,url});return}catch(e){if(e&&e.name==="AbortError")return}}
+  try{await navigator.clipboard.writeText(url);msg.textContent="Lien copié ! Colle-le à tes potes.";msg.hidden=false;toast("Lien d'invitation copié !")}
+  catch(e){msg.textContent=url;msg.hidden=false}}
+function roomState(r){const ph=r.phase;
+  if(r.mode==="coop")return ph==="play"?`vague ${r.wave} en cours`:ph==="break"?`entre deux vagues (vague ${r.wave} finie)`:ph==="end"?"équipe K.O., ça repart bientôt":"la partie commence";
+  return ph==="wait"?"en attente d'un adversaire":ph==="count"?`manche ${r.round} : ça commence`:ph==="play"?`manche ${r.round} en cours`:"podium de fin de manche"}
+function randomCode(taken){const A="ABCDEFGHJKLMNPRSTUVWXYZ";for(let k=0;k<50;k++){let c="";for(let i=0;i<5;i++)c+=A[Math.floor(Math.random()*A.length)];if(!taken.has(c))return c}return "GAZ"+Math.floor(Math.random()*9000+1000)}
+let listedRooms=new Set();
 function setMpMode(m){mpMode=m==="coop"?"coop":"versus";try{localStorage.setItem("gef_mpmode",mpMode)}catch(e){}
   document.querySelectorAll(".md").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.mode===mpMode)));
   $("rulesCoop").hidden=mpMode!=="coop";$("rulesVersus").hidden=mpMode==="coop";
@@ -1189,7 +1218,10 @@ function setMpMode(m){mpMode=m==="coop"?"coop":"versus";try{localStorage.setItem
 document.querySelectorAll(".md").forEach(b=>{b.onclick=()=>{setMpMode(b.dataset.mode);b.focus()};
   b.onkeydown=e=>{if(e.key==="ArrowLeft"||e.key==="ArrowRight"){e.preventDefault();e.stopPropagation();setMpMode(mpMode==="coop"?"versus":"coop");document.querySelector(`.md[data-mode="${mpMode}"]`).focus()}}});
 function openMP(){if(!askPseudo())return;audio();$("startS").hidden=true;$("mpS").hidden=false;
-  delete $("mpRoom").dataset.touched;setMpMode(mpMode);
+  delete $("mpRoom").dataset.touched;setMpMode(invite?invite.mode:mpMode);
+  if(invite){const inv=invite;invite=null;$("mpRoom").value=inv.room;$("mpRoom").dataset.touched="1";$("mpPriv").checked=inv.priv;
+    try{const u=new URL(location.href);["salle","mode","prive"].forEach(k=>u.searchParams.delete(k));history.replaceState(null,"",u)}catch(e){}
+    if(mpUrl()){loadMpImgs();setTimeout(mpJoin,0);return}}
   $("mpCtrl").textContent=touchMode?"Doigt à gauche : courir · doigt à droite : viser et tirer · TIR : tir automatique":"ZQSD ou flèches : courir · souris : viser · clic : tirer · Espace : prout · C : caca · E : pouvoir";
   const u=mpUrl(),msg=$("mpMsg");msg.className="save";msg.textContent="";$("mpJoin").disabled=!u;
   if(!u){msg.className="save bad";msg.textContent="Le serveur multijoueur n'est pas encore branché : ajoute son adresse (multiUrl) dans config.js.";$("mpRooms").replaceChildren();return}
@@ -1200,9 +1232,14 @@ async function refreshRooms(first){const ul=$("mpRooms");
   if(first){ul.replaceChildren();const li=document.createElement("li");li.className="empty";li.textContent="Recherche des salles…";ul.appendChild(li)}
   let rows;try{rows=await fetchRooms(first?20000:6000)}catch(e){if(first){ul.firstChild.textContent="Serveur endormi ou injoignable. « Rejoindre » le réveille."}return}
   ul.replaceChildren();if(!rows.length){const li=document.createElement("li");li.className="empty";li.textContent="Aucune salle ouverte : crée la tienne avec un code !";ul.appendChild(li);return}
+  listedRooms=new Set(rows.map(r=>r.code));
   rows.sort((a,b)=>b.n-a.n).forEach(r=>{const li=document.createElement("li");li.tabIndex=0;const full=r.n>=r.max;if(full)li.className="full";
-    const b=document.createElement("b");b.textContent=r.code;const mo=document.createElement("span");mo.className="mo";mo.textContent=r.mode==="coop"?"🤝 coop"+(r.wave?" · vague "+r.wave:""):"⚔️ chacun pour soi";b.appendChild(mo);
-    const s=document.createElement("span");s.textContent=r.n+"/"+r.max+(full?" · pleine":"");li.append(b,s);li.title=MODE_LABEL[r.mode==="coop"?"coop":"versus"];
+    const l=document.createElement("div");l.className="rl";
+    const b=document.createElement("b");b.textContent=r.code;const mo=document.createElement("span");mo.className="mo";mo.textContent=r.mode==="coop"?"🤝 coop":"⚔️ chacun pour soi";b.appendChild(mo);
+    const st=document.createElement("span");st.className="rs"+(r.phase==="play"?" on":"");st.textContent=roomState(r);
+    const nm=document.createElement("span");nm.className="rn";const names=r.names||[];nm.textContent=names.slice(0,4).join(", ")+(names.length>4?` +${names.length-4}`:"");
+    l.append(b,st);if(names.length)l.append(nm);
+    const s=document.createElement("span");s.textContent=r.n+"/"+r.max+(full?" · pleine":"");li.append(l,s);li.title=MODE_LABEL[r.mode==="coop"?"coop":"versus"]+" · "+roomState(r);
     const go=()=>{if(full)return;$("mpRoom").value=r.code;mpJoin()};li.onclick=go;li.onkeydown=e=>{if(e.key==="Enter")go()};ul.appendChild(li)})}
 let joining=false;
 async function mpJoin(){if(joining||MP)return;const u=mpUrl();if(!u)return;const code=cleanRoom($("mpRoom").value);$("mpRoom").value=code;try{localStorage.setItem("gef_room_"+mpMode,code)}catch(e){}
@@ -1215,7 +1252,7 @@ async function mpJoin(){if(joining||MP)return;const u=mpUrl();if(!u)return;const
   if(!awake){fail("Serveur injoignable. Réessaie dans un instant.");return}
   let ws;try{ws=new WebSocket(u)}catch(e){fail("Adresse du serveur invalide.");return}
   let ok=false,done=false;const to=setTimeout(()=>{if(!ok){done=true;try{ws.close()}catch(e){}fail("Le serveur ne répond pas. Réessaie.")}},15000);
-  ws.onopen=()=>ws.send(JSON.stringify({t:"join",room:code,mode:mpMode,name:pseudo,ch:chKey}));
+  ws.onopen=()=>ws.send(JSON.stringify({t:"join",room:code,mode:mpMode,priv:$("mpPriv").checked,name:pseudo,ch:chKey}));
   ws.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return}
     if(!ok){if(m.t==="welcome"){ok=true;clearTimeout(to);joining=false;btn.disabled=false;msg.textContent="";mpStart(ws,m)}
       else if(m.t==="full"){done=true;clearTimeout(to);ws.close();fail("La salle "+m.room+" est pleine ("+m.max+" joueurs). Choisis un autre code.")}
@@ -1228,7 +1265,7 @@ async function mpJoin(){if(joining||MP)return;const u=mpUrl();if(!u)return;const
 function mpStart(ws,m){
   engineStop();running=false;paused=false;S=null;
   const mode=m.mode==="coop"?"coop":"versus";
-  MP={ws,id:m.id,room:m.room,max:m.max||10,rules:m.rules||{},t:0,mode,coop:mode==="coop",mons:new Map(),wave:0,left:0,
+  MP={ws,id:m.id,room:m.room,max:m.max||10,rules:m.rules||{},t:0,mode,coop:mode==="coop",priv:!!m.priv,mons:new Map(),wave:0,left:0,
     me:{x:m.x,y:m.y,vx:0,vy:0,r:22,a:0,kbx:0,kby:0,anim:0,face:1,sn:0,alive:true,hp:3,gauge:0,cafe:0,shield:true,stun:false,boost:false,act:"",actT:0,cd:0,deadT:0,hit:false},
     roster:new Map(),snaps:[],others:new Map(),bolts:[],sbolts:[],items:new Map(),coffee:null,poops:new Map(),clouds:new Map(),
     parts:[],texts:[],embers:[],sendT:0,pingT:0,ping:0,cid:1,aim:{on:false,id:null,x:0,y:0,bx:0,by:0,t0:0},mouse:{x:0,y:0,on:false},
@@ -1237,13 +1274,14 @@ function mpStart(ws,m){
   cam.x=m.x;cam.y=m.y;keysDown.clear();
   $("mpS").hidden=true;$("startS").hidden=true;$("overS").hidden=true;$("hud").hidden=false;$("mpBoard").hidden=false;$("mpFeed").hidden=false;$("mpFeed").replaceChildren();$("mpTimer").hidden=false;$("spw").hidden=false;
   $("score").parentElement.firstChild.textContent="K.O. ";$("carT").hidden=true;
-  $("pauseT").textContent="Menu";$("pauseHint").hidden=false;$("quitMP").hidden=false;
-  applyTouchUI();mpHud();feed(`Tu entres dans la salle <b>${esc(MP.room)}</b> · ${MP.coop?"🤝 Coopération":"⚔️ Chacun pour soi"}`);
+  $("pauseT").textContent="Menu";$("pauseHint").hidden=false;$("quitMP").hidden=false;$("mpInvite").hidden=false;$("mpRoomInfo").hidden=false;$("mpInviteMsg").hidden=true;
+  applyTouchUI();mpHud();feed(`Tu entres dans la salle <b>${esc(MP.room)}</b>${MP.priv?" 🔒":""} · ${MP.coop?"🤝 Coopération":"⚔️ Chacun pour soi"}`);feed(`Invite tes potes : menu ${touchMode?"II":"(Échap)"} → Inviter`);
+  $("mpRoomInfo").textContent=`Salle ${MP.room} · ${MP.coop?"🤝 Coopération":"⚔️ Chacun pour soi"}${MP.priv?" · 🔒 privée":""}`;
   if(mode!==mpMode)toast(`La salle ${MP.room} est en mode « ${MODE_LABEL[mode]} »`);
   if(touchMode&&document.documentElement.requestFullscreen&&!document.fullscreenElement){document.documentElement.requestFullscreen().catch(()=>{})}}
 function mpCleanup(){if(!MP)return;const ws=MP.ws;MP=null;try{ws.onclose=null;ws.close()}catch(e){}
   joy.on=false;keysDown.clear();$("hud").hidden=true;$("mpBoard").hidden=true;$("mpFeed").hidden=true;$("mpDead").hidden=true;$("mpTimer").hidden=true;$("spw").hidden=true;document.body.classList.remove("mpPw");$("mpRound").hidden=true;$("mpPodium").hidden=true;$("pauseS").hidden=true;
-  $("score").parentElement.firstChild.textContent="SCORE ";$("pauseT").textContent="Pause";$("pauseHint").hidden=true;$("quitMP").hidden=true;applyTouchUI()}
+  $("score").parentElement.firstChild.textContent="SCORE ";$("pauseT").textContent="Pause";$("pauseHint").hidden=true;$("quitMP").hidden=true;$("mpInvite").hidden=true;$("mpRoomInfo").hidden=true;$("mpInviteMsg").hidden=true;applyTouchUI()}
 function mpQuit(){mpCleanup();$("startS").hidden=false;$("openMP").focus()}
 function mpLost(){mpCleanup();openMP();const msg=$("mpMsg");msg.className="save bad";msg.textContent="Connexion perdue. Tu peux rejoindre à nouveau."}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -1491,7 +1529,7 @@ function mpRanking(){return[...MP.roster.entries()].sort((a,b)=>b[1].kills-a[1].
 function renderMpBoard(){if(!MP)return;const rows=mpRanking();MP.leader=rows.length>1&&rows[0][1].kills>0&&(rows.length<2||rows[0][1].kills>rows[1][1].kills)?rows[0][0]:0;
   const narrow=vw<620;let shown=rows;if(narrow&&rows.length>5){const mi=rows.findIndex(r=>r[0]===MP.id);shown=rows.slice(0,4);if(mi>=4)shown.push(rows[mi]);else shown=rows.slice(0,5)}
   const sig=JSON.stringify(shown)+MP.ping+MP.wave;if(sig===MP.boardSig)return;MP.boardSig=sig;
-  const b=$("mpBoard");b.innerHTML=`<div class="hd"><span>Salle ${esc(MP.room)} · ${MP.coop?"🤝 vague "+MP.wave:rows.length+"/"+MP.max}</span><span>${MP.coop?"Mon. / M":"K / M"}</span></div>`+
+  const b=$("mpBoard");b.innerHTML=`<div class="hd"><span>Salle ${esc(MP.room)}${MP.priv?" 🔒":""} · ${MP.coop?"🤝 vague "+MP.wave:rows.length+"/"+MP.max}</span><span>${MP.coop?"Mon. / M":"K / M"}</span></div>`+
     shown.map(([id,r])=>{const o=id===MP.id?MP.me:MP.others.get(id);const dead=o&&(id===MP.id?!o.alive:!(o.f&1));
       return`<div class="r${id===MP.id?" me":""}${dead?" dead":""}"><span>${id===MP.leader?"👑 ":""}${esc(r.name)}</span><i>${r.kills}</i><em>${r.deaths}</em></div>`}).join("")}
 
@@ -1631,7 +1669,8 @@ function mpDraw(tt,x0,y0,ww,hh){const now=performance.now(),P=MP.me;
 $("openMP").onclick=openMP;$("mpJoin").onclick=mpJoin;$("mpBack").onclick=()=>{$("mpS").hidden=true;$("startS").hidden=false;clearInterval(roomsTimer);$("openMP").focus()};
 $("mpRoom").addEventListener("keydown",e=>{e.stopPropagation();if(e.key==="Enter")mpJoin()});
 $("mpRoom").addEventListener("input",e=>{e.target.dataset.touched="1";const v=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,"");if(v!==e.target.value)e.target.value=v});
-$("quitMP").onclick=mpQuit;
+$("quitMP").onclick=mpQuit;$("mpInvite").onclick=shareInvite;
+$("mpCreate").onclick=()=>{const r=$("mpRoom");r.value=randomCode(listedRooms);r.dataset.touched="1";mpJoin()};
 })();
 </script>
 </body>

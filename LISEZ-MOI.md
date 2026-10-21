@@ -97,6 +97,14 @@ Bouton **Multijoueur** du menu, puis choix du mode :
 
 Une salle garde le mode choisi par celui qui l'a créée : si tu rejoins une salle existante, tu joues dans son mode (la liste des salles l'affiche).
 
+### Salles
+
+- **Créer une salle** : tape le code de ton choix (8 lettres ou chiffres max) puis **Rejoindre**, ou appuie sur **Créer une salle** pour un code inventé au hasard. Autant de salles que tu veux en même temps, 10 joueurs max chacune.
+- **Salles publiques** : la liste montre chaque salle avec son mode, l'état de la partie (en attente, manche 2 en cours, vague 4 en cours, podium…), les pseudos des joueurs et le nombre de places. Clique sur une salle pour la rejoindre.
+- **Salle privée** : coche « Salle privée » avant de créer la salle. Elle n'apparaît pas dans la liste : on y entre avec le code ou le lien d'invitation.
+- **Inviter des potes** : en jeu, ouvre le menu (Échap, ou le bouton II sur téléphone) puis **Inviter des potes**. Le lien est copié (ou partagé directement sur téléphone). Il ouvre le jeu dans la bonne salle ; un nouveau joueur choisit juste son pseudo avant.
+- Une salle disparaît quand le dernier joueur part.
+
 ### Chacun pour soi
 
 Jusqu'à **10 joueurs** dans la même salle, sur la même carte, sans monstres. Chacun se bat à l'arbalète.
