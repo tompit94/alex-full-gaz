@@ -318,6 +318,33 @@ body.mpPw #mpTimer{top:calc(150px + env(safe-area-inset-top,0px))}
 #mpPodium .rest li.me{color:var(--flame)}
 #mpPodium .mine{margin:0 0 6px;font-family:var(--pix);font-weight:700;color:var(--flame);font-size:15px}
 #mpPodium .next{margin:0;font-size:13px;color:var(--parch)}
+/* ===== Petits écrans : tout doit tenir dans la largeur ===== */
+#pad{left:0;justify-content:flex-end;gap:clamp(6px,2.4vw,14px);pointer-events:none;
+  padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px,env(safe-area-inset-right,0px))}
+#pad .act{pointer-events:auto;flex:none}
+#bCaca,#bSup{width:min(84px,20vw);height:min(84px,20vw);font-size:min(16px,3.6vw)}
+#bSup{font-size:min(14px,3vw)}
+#bProut,#bTir{width:min(96px,22vw);height:min(96px,22vw);font-size:min(18px,4vw)}
+.act small{font-size:min(12px,3vw)}
+@media (pointer:fine){#bCaca,#bSup{width:72px;height:72px;font-size:14px}#bProut,#bTir{width:84px;height:84px;font-size:17px}}
+#hud>div:first-child{position:relative;min-width:0}
+#spw{position:absolute;left:0;top:100%;white-space:normal;flex-wrap:wrap;width:max-content;max-width:min(62vw,420px)}
+.gauge{min-width:0}.gsub{text-align:center}
+.right{min-width:0}
+@media (max-width:480px){
+  .score{font-size:clamp(13px,3.6vw,18px)}
+  .hearts svg{width:clamp(16px,4.4vw,24px)}
+  .seg{width:clamp(12px,3.8vw,24px)}
+  .glabel{font-size:clamp(12px,3.2vw,16px)}
+  .icons button{width:32px;height:32px;font-size:13px}
+  .cafe>span:first-child{display:none}
+  .cafe{font-size:15px}
+  .cafe .cup{width:32px;height:32px}
+  .cafe .cup canvas{width:24px;height:24px}
+  #spw{width:auto;max-width:none;font-size:11px}
+  #mpBoard{top:calc(108px + env(safe-area-inset-top,0px))}
+  #mpFeed{top:calc(128px + env(safe-area-inset-top,0px))}
+}
 </style>
 
 <canvas id="game" aria-label="Jeu Full Gaz !"></canvas>
