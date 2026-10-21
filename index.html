@@ -1348,7 +1348,7 @@ function mpEvent(e){const me=MP.id,P=MP.me;
       else{atPos(posOf(e.id),SFX.eat);feed(`<b>${esc(nameOf(e.id))}</b> prend ${esc(d.name)}`)}break}
     case "superok":if(e.id===me){txt(P.x,P.y-150,"POUVOIR PRÊT !","#ffe066");[660,880,1100].forEach((f,i)=>tone(f,f,.12,"triangle",.1,i*.09));toast(touchMode?"Pouvoir prêt ! Appuie sur POUVOIR":"Pouvoir prêt ! Appuie sur E")}break;
     case "super":{const o=posOf(e.id),c=supOf(chOf(e.id)),pl=PWR[c.pwr]||{};if(o){burst(o.x,o.y-50,"#ffe066",22,320);puff(o.x,o.y-30,"#ffffff",14)}
-      if(e.id===me){cam.shake=12;tone(300,900,.35,"sawtooth",.1);tone(600,1800,.3,"square",.06,.1);txt(P.x,P.y-150,pl.label||"POUVOIR !","#ffe066");toast((pl.label||"POUVOIR").replace(/ !$/,"")+" : "+supDesc[c.k]+" pendant "+((MP.rules.sup||{}).time||6)+" s")}
+      if(e.id===me){cam.shake=12;tone(300,900,.35,"sawtooth",.1);tone(600,1800,.3,"square",.06,.1);txt(P.x,P.y-150,pl.label||"POUVOIR !","#ffe066");toast((pl.label||"POUVOIR").replace(/ !$/,"")+" : "+(MP.coop&&c.k==="guard"?"invulnérable, K.O. au contact":supDesc[c.k])+" pendant "+((MP.rules.sup||{}).time||6)+" s")}
       else{atPos(o,()=>tone(300,900,.3,"sawtooth",.08));feed(`<b>${esc(nameOf(e.id))}</b> active son pouvoir : <span class="k">${esc((pl.label||"POUVOIR").replace(/ !$/,""))}</span>`)}break}
     case "superend":if(e.id===me){const pl=PWR[supOf(chKey).pwr]||{};txt(P.x,P.y-130,pl.end||"Fin du pouvoir","#fff6e0")}break;
     case "quoi":mpQuoi(posOf(e.id));break;
@@ -1357,7 +1357,7 @@ function mpEvent(e){const me=MP.id,P=MP.me;
     // coopération : monstres et vagues
     case "mhit":{burst(e.x,e.y-45,"#b5f25b",6,150);if(e.by===me){MP.hitMark=.3;SFX.tic()}else atPos(e,SFX.thunk);break}
     case "mkill":{const boss=e.ty==="a";MP.parts.push({x:e.x,y:e.y-70,vx:0,vy:-60,r:0,skull:1,t:0,life:1.2});puff(e.x,e.y-30,"#e9e2d5",boss?26:12);
-      if(e.kind==="ram"||e.kind==="melee"){const pl=PWR[supOf(chOf(e.by)).pwr]||{};txt(e.x,e.y-110,(pl.hit||"BAM ! +").replace(/\s*\+$/,""),"#ff9a4d");burst(e.x,e.y-40,"#ffe066",14,300);atPos(e,e.kind==="ram"?SFX.squash:SFX.bonk)}
+      if(e.kind==="ram"||e.kind==="melee"||e.kind==="guard"){const pl=PWR[supOf(chOf(e.by)).pwr]||{};txt(e.x,e.y-110,(pl.hit||"BAM ! +").replace(/\s*\+$/,""),"#ff9a4d");burst(e.x,e.y-40,"#ffe066",14,300);atPos(e,e.kind==="ram"?SFX.squash:SFX.bonk)}
       else if(e.kind==="poop")txt(e.x,e.y-110,"PIÉGÉ !","#ffb36b");
       if(boss){cam.shake=14;feed(`<b>${esc(nameOf(e.by))}</b> <span class="k">terrasse</span> le croqueur de pomme !`);[523,659,784].forEach((f,i)=>tone(f,f,.18,"triangle",.11,i*.12))}
       if(e.by===me){SFX.ko();txt(e.x,e.y-150,boss?"BOSS K.O. !":"K.O. !","#ffcf3a");if(e.streak>=5&&e.streak%5===0)toast("Série de "+e.streak+" monstres !")}else atPos(e,SFX.ko);break}

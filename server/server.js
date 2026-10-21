@@ -433,14 +433,15 @@ class Room {
         p.spT -= dt;
         const sk = superOf(p);
         if (p.spT <= 0) { p.spT = 0; this.ev({ k: "superend", id: p.id }); }
-        else if (sk === "ram" || sk === "melee") {
+        // en coopération, Mihide (bouclier) frappe aussi les monstres au contact : sinon son pouvoir ne servait à rien contre eux
+        else if (sk === "ram" || sk === "melee" || (sk === "guard" && this.coop)) {
           const rad = sk === "ram" ? SUPER.ramR : SUPER.meleeR;
           if (this.coop) for (const m of this.mons) {
             if (m.st === "dead" || m.meleeT > 0 || Math.hypot(m.x - p.x, m.y - p.y) > rad + 4) continue;
             const dx = m.x - p.x, dy = m.y - p.y, d = Math.hypot(dx, dy) || 1;
             m.meleeT = 0.35; this.hurtMon(m, p, m.type === "a" ? 3 : 99, sk, dx / d * 520, dy / d * 520);
           }
-          if (!this.coop) for (const v of P) {
+          if (!this.coop && sk !== "guard") for (const v of P) {
             if (v === p || !v.alive || v.shield > 0) continue;
             if (Math.hypot(v.x - p.x, v.y - p.y) > rad) continue;
             if (v.pw === "armor" || superOf(v) === "guard") continue;
