@@ -19,7 +19,7 @@ function bot(i) {
     if (m.t === "full") { console.log("salle pleine"); ws.close(); }
     if (m.t === "s") {
       others = m.p.filter(p => p[0] !== me.id && p[6] & 1);
-      const mine = m.p.find(p => p[0] === me.id); if (mine) me.alive = !!(mine[6] & 1);
+      const mine = m.p.find(p => p[0] === me.id); if (mine) { me.alive = !!(mine[6] & 1); if (mine[14] >= 3 && me.alive) ws.send(JSON.stringify({ t: "super" })); }
       for (const e of m.e) {
         if (e.k === "spawn" && e.id === me.id) { me.x = e.x; me.y = e.y; me.sn = e.sn; }
         if (e.k === "hit" && e.id === me.id) { me.vx += e.kx; me.vy += e.ky; }

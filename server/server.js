@@ -29,6 +29,16 @@ const POW = {
   armor:  { item: "donut",  time: 6 },                 // Donut bouclier : invulnérable
 };
 const POW_KINDS = Object.keys(POW), POW_MAX = 2;
+// Pouvoirs des persos : la jauge se remplit avec les K.O. (3 K.O. = pouvoir prêt), il dure 6 s
+//  ram   : véhicule (Alex = voiture, Nini = Vespa) — très rapide, renverse au contact, pas de tir, insensible au prout
+//  melee : arme blanche (Greg, Arthur, Gargar, Yonarie) — plus rapide, K.O. en un coup au contact, garde l'arbalète
+//  guard : bouclier (Mihide) — invulnérable, renvoie les carreaux à l'envoyeur
+//  Yonarie crie en plus « QUOIIII » toutes les 1,5 s : étourdit les adversaires proches
+const SUPER = { need: 3, time: 6, ramR: 64, meleeR: 60, quoiR: 230, quoiEvery: 1.5,
+  speed: { ram: 1.7, melee: 1.3, guard: 1.2 } };
+const TEST_SUPER = process.env.TEST_SUPER === "1"; // test : jauge pleine en permanence
+const SUPER_KIND = { sucre: "ram", italien: "ram", sale: "melee", arthur: "melee", gargar: "melee", yonarie: "melee", mihide: "guard" };
+const superOf = p => (p.spT > 0 ? SUPER_KIND[p.ch] || "melee" : "");
 // éclair et donut sont réservés aux super-pâtisseries pour qu'on les reconnaisse
 const TREATS = ["croissant", "painchoc", "bonbon", "baguette", "burger", "penne", "spaghetti", "lasagne"];
 
@@ -84,7 +94,7 @@ class Room {
       x: 0, y: 0, vx: 0, vy: 0, r: 22, a: 0, mv: 0,
       hp: R.hp, alive: true, deadT: 0, shield: R.spawnShield, stun: 0, boost: 0,
       gauge: 0, cafe: 0, cd: 0, kills: 0, deaths: 0, streak: 0, lastMove: Date.now(),
-      act: "", actT: 0, hitT: 0, spawnN: 0, pw: "", pwT: 0,
+      act: "", actT: 0, hitT: 0, spawnN: 0, pw: "", pwT: 0, pk: 0, spT: 0, quoiT: 0,
     };
     const s = this.freeSpot(450, 140); p.x = s.x; p.y = s.y;
     this.players.set(id, p);
@@ -114,7 +124,7 @@ class Room {
       const s = this.freeSpot(500, 140);
       p.spawnN++; p.lastMove = Date.now();
       Object.assign(p, { x: s.x, y: s.y, vx: 0, vy: 0, hp: R.hp, alive: true, deadT: 0, shield: ROUND.count + R.spawnShield, stun: 0, boost: 0,
-        gauge: 0, cafe: 0, cd: 0, kills: 0, deaths: 0, streak: 0, act: "", actT: 0, kbBudget: 0, pw: "", pwT: 0 });
+        gauge: 0, cafe: 0, cd: 0, kills: 0, deaths: 0, streak: 0, act: "", actT: 0, kbBudget: 0, pw: "", pwT: 0, pk: 0, spT: 0 });
       this.ev({ k: "spawn", id: p.id, x: r1(p.x), y: r1(p.y), sn: p.spawnN });
     }
     this.itemsDirty = true; this.podium = null;
@@ -166,7 +176,8 @@ class Room {
     // le client calcule son déplacement ; le serveur vérifie la vitesse et les obstacles
     const now = Date.now(), dt = Math.min(0.5, Math.max(0.016, (now - p.lastMove) / 1000));
     p.lastMove = now;
-    const max = R.speed * R.boost * 1.6 * dt + 40 + (p.kbBudget || 0);
+    const sk = superOf(p), sm = sk ? SUPER.speed[sk] : 1;
+    const max = R.speed * R.boost * sm * 1.6 * dt + 40 + (p.kbBudget || 0);
     let nx = num(m.x, p.x), ny = num(m.y, p.y);
     const dx = nx - p.x, dy = ny - p.y, d = Math.hypot(dx, dy);
     if (d > max) { nx = p.x + dx / d * max; ny = p.y + dy / d * max; }
@@ -176,7 +187,7 @@ class Room {
     p.a = num(m.a, p.a); p.mv = m.mv ? 1 : 0;
   }
   onFire(p, m) {
-    if (!p.alive || p.stun > 0 || p.cd > 0 || !this.canFight()) return;
+    if (!p.alive || p.stun > 0 || p.cd > 0 || !this.canFight() || superOf(p) === "ram") return;
     // petite marge : le client compte son propre délai et peut tirer quelques ms en avance
     p.cd = (p.pw === "rapid" ? POW.rapid.fireCd : R.fireCd) - 0.04; p.shield = 0; p.act = "aim"; p.actT = 0.35;
     const a = num(m.a, p.a); p.a = a;
@@ -195,6 +206,11 @@ class Room {
     this.clouds.push({ id: this.nextObj++, owner: p.id, x: p.x - (Math.cos(p.a) >= 0 ? 1 : -1) * 20, y: p.y - 20, t: 0, hit: new Set() });
     this.ev({ k: "prout", id: p.id });
   }
+  onSuper(p) {
+    if (!p.alive || p.pk < SUPER.need || p.spT > 0 || this.phase === "count" || this.phase === "end") return;
+    p.pk = 0; p.spT = SUPER.time; p.quoiT = 0.2; p.stun = 0; p.shield = 0;
+    this.ev({ k: "super", id: p.id, s: SUPER_KIND[p.ch] || "melee" });
+  }
   onCaca(p) {
     if (!p.alive || p.cafe < 1 || !this.canFight()) return;
     p.cafe--; p.act = "poop"; p.actT = 0.5;
@@ -205,13 +221,13 @@ class Room {
 
   damage(v, by, kind, kx, ky) {
     if (!v.alive || v.shield > 0 || !this.canFight()) return false;
-    if (v.pw === "armor") { this.ev({ k: "block", id: v.id, x: r1(v.x), y: r1(v.y) }); return false; }
+    if (v.pw === "armor" || superOf(v) === "guard") { this.ev({ k: "block", id: v.id, x: r1(v.x), y: r1(v.y) }); return false; }
     v.hp--; v.hitT = 0.25;
     this.ev({ k: "hit", id: v.id, by: by ? by.id : 0, kind, kx: r1(kx), ky: r1(ky) });
     v.kbBudget = (v.kbBudget || 0) + 160;
     if (v.hp <= 0) {
-      v.alive = false; v.deadT = R.respawn; v.deaths++; v.streak = 0; v.gauge = 0; v.cafe = 0; v.pw = ""; v.pwT = 0;
-      if (by && by !== v) { by.kills++; by.streak++; }
+      v.alive = false; v.deadT = R.respawn; v.deaths++; v.streak = 0; v.gauge = 0; v.cafe = 0; v.pw = ""; v.pwT = 0; v.spT = 0;
+      if (by && by !== v) { by.kills++; by.streak++; if (!(by.spT > 0) && by.pk < SUPER.need) { by.pk++; if (by.pk === SUPER.need) this.ev({ k: "superok", id: by.id }); } }
       this.ev({ k: "kill", id: v.id, by: by ? by.id : 0, kind, streak: by ? by.streak : 0 });
     }
     return true;
@@ -230,11 +246,42 @@ class Room {
         p.deadT -= dt;
         if (p.deadT <= 0) {
           const s = this.freeSpot(500, 140);
-          p.spawnN++; p.lastMove = Date.now(); p.pw = ""; p.pwT = 0;
+          p.spawnN++; p.lastMove = Date.now(); p.pw = ""; p.pwT = 0; p.spT = 0;
           Object.assign(p, { x: s.x, y: s.y, vx: 0, vy: 0, hp: R.hp, alive: true, shield: R.spawnShield, stun: 0, act: "", kbBudget: 0 });
           this.ev({ k: "spawn", id: p.id, x: r1(p.x), y: r1(p.y), sn: p.spawnN });
         }
         continue;
+      }
+      // pouvoir du perso
+      if (TEST_SUPER && !(p.spT > 0)) p.pk = SUPER.need;
+      if (p.spT > 0) {
+        p.spT -= dt;
+        const sk = superOf(p);
+        if (p.spT <= 0) { p.spT = 0; this.ev({ k: "superend", id: p.id }); }
+        else if (sk === "ram" || sk === "melee") {
+          const rad = sk === "ram" ? SUPER.ramR : SUPER.meleeR;
+          for (const v of P) {
+            if (v === p || !v.alive || v.shield > 0) continue;
+            if (Math.hypot(v.x - p.x, v.y - p.y) > rad) continue;
+            if (v.pw === "armor" || superOf(v) === "guard") continue;
+            const dx = v.x - p.x, dy = v.y - p.y, d = Math.hypot(dx, dy) || 1;
+            v.hp = 1; this.damage(v, p, sk, dx / d * 520, dy / d * 520);
+          }
+          if (p.ch === "yonarie") {
+            p.quoiT -= dt;
+            if (p.quoiT <= 0) {
+              p.quoiT = SUPER.quoiEvery;
+              this.ev({ k: "quoi", id: p.id });
+              for (const v of P) {
+                if (v === p || !v.alive || v.shield > 0 || superOf(v) === "ram" || superOf(v) === "guard") continue;
+                const dx = v.x - p.x, dy = v.y - p.y, d = Math.hypot(dx, dy) || 1;
+                if (d > SUPER.quoiR) continue;
+                v.stun = Math.max(v.stun, 1.1); v.kbBudget = (v.kbBudget || 0) + 260;
+                this.ev({ k: "stun", id: v.id, by: p.id, kx: r1(dx / d * 360), ky: r1(dy / d * 360) });
+              }
+            }
+          }
+        }
       }
       // friandises
       for (let i = this.items.length - 1; i >= 0; i--) {
@@ -291,6 +338,12 @@ class Room {
         if (hitP && hitT <= obsT) {
           const sh = this.players.get(b.owner);
           const sp = Math.hypot(b.vx, b.vy) || 1;
+          if (superOf(hitP) === "guard") {
+            // Mihide renvoie le carreau à l'envoyeur
+            b.owner = hitP.id; b.vx = -b.vx; b.vy = -b.vy; b.life = R.boltLife; b.x = x0; b.y = y0;
+            this.ev({ k: "reflect", id: hitP.id, x: r1(hitP.x), y: r1(hitP.y) });
+            continue;
+          }
           if (hitP.shield > 0) this.ev({ k: "block", id: hitP.id, x: r1(hitP.x), y: r1(hitP.y) });
           else this.damage(hitP, sh, "bolt", b.vx / sp * 320, b.vy / sp * 320);
           dead = true;
@@ -308,7 +361,7 @@ class Room {
       const c = this.clouds[i]; c.t += dt;
       const rad = Math.min(1, c.t / .35) * R.cloudR;
       if (c.t < R.cloudLife - .3) for (const p of P) {
-        if (p.id === c.owner || !p.alive || c.hit.has(p.id) || p.shield > 0) continue;
+        if (p.id === c.owner || !p.alive || c.hit.has(p.id) || p.shield > 0 || superOf(p) === "ram" || superOf(p) === "guard") continue;
         if (Math.hypot(c.x - p.x, c.y - p.y) < rad + 10) {
           c.hit.add(p.id); p.stun = R.stun; p.kbBudget = (p.kbBudget || 0) + 300;
           const dx = p.x - c.x, dy = p.y - c.y, d = Math.hypot(dx, dy) || 1;
@@ -344,7 +397,7 @@ class Room {
     for (const p of this.players.values()) {
       let f = 0;
       if (p.alive) f |= 1; if (p.mv) f |= 2; if (p.shield > 0) f |= 4; if (p.stun > 0) f |= 8; if (p.boost > 0) f |= 16; if (p.hitT > 0) f |= 32;
-      pl.push([p.id, r1(p.x), r1(p.y), Math.round(p.vx), Math.round(p.vy), Math.round(p.a * 100) / 100, f, p.hp, p.gauge, p.cafe, p.act, Math.ceil(p.deadT * 10) / 10, p.pw, r1(p.pwT)]);
+      pl.push([p.id, r1(p.x), r1(p.y), Math.round(p.vx), Math.round(p.vy), Math.round(p.a * 100) / 100, f, p.hp, p.gauge, p.cafe, p.act, Math.ceil(p.deadT * 10) / 10, p.pw, r1(p.pwT), p.pk, r1(p.spT)]);
     }
     return {
       t: "s", tm: Math.round(this.t * 1000),
@@ -416,7 +469,7 @@ wss.on("connection", ws => {
         room = null; return;
       }
       me = room.addPlayer(ws, name, m.ch);
-      ws.send(JSON.stringify({ t: "welcome", id: me.id, room: code, x: me.x, y: me.y, max: MAX_PLAYERS, rules: { round: ROUND, pow: POW, hp: R.hp, fireCd: R.fireCd, boltSpeed: R.boltSpeed, boltLife: R.boltLife, speed: R.speed, boost: R.boost, cloudR: R.cloudR, cloudLife: R.cloudLife, poopLife: R.poopLife, respawn: R.respawn } }));
+      ws.send(JSON.stringify({ t: "welcome", id: me.id, room: code, x: me.x, y: me.y, max: MAX_PLAYERS, rules: { round: ROUND, pow: POW, sup: SUPER, hp: R.hp, fireCd: R.fireCd, boltSpeed: R.boltSpeed, boltLife: R.boltLife, speed: R.speed, boost: R.boost, cloudR: R.cloudR, cloudLife: R.cloudLife, poopLife: R.poopLife, respawn: R.respawn } }));
       room.broadcast(room.roster());
       return;
     }
@@ -425,6 +478,7 @@ wss.on("connection", ws => {
     else if (m.t === "fire") room.onFire(me, m);
     else if (m.t === "prout") room.onProut(me);
     else if (m.t === "caca") room.onCaca(me);
+    else if (m.t === "super") room.onSuper(me);
     else if (m.t === "ping") ws.send(JSON.stringify({ t: "pong", c: m.c }));
   });
 

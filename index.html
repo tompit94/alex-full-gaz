@@ -263,7 +263,7 @@ html,body{height:100%;overflow:hidden;background:#2f6b2a;color:var(--ink);font-f
 #mpBoard .r.me{color:var(--flame)}#mpBoard .r.dead{opacity:.5}
 #mpBoard .r i{font-style:normal;color:#7fd4ff}#mpBoard .r em{font-style:normal;color:var(--mist);font-size:10px}
 #mpBoard .hd{color:var(--mist);font-size:10px;display:flex;justify-content:space-between;gap:8px}
-#mpFeed{position:fixed;left:max(12px,env(safe-area-inset-left,0px));top:calc(96px + env(safe-area-inset-top,0px));pointer-events:none;display:flex;flex-direction:column;gap:3px;font-family:var(--pix);font-weight:700;font-size:11px}
+#mpFeed{position:fixed;left:max(12px,env(safe-area-inset-left,0px));top:calc(118px + env(safe-area-inset-top,0px));pointer-events:none;display:flex;flex-direction:column;gap:3px;font-family:var(--pix);font-weight:700;font-size:11px}
 #mpFeed div{background:rgba(13,9,18,.62);color:var(--parch);padding:3px 7px;border-radius:2px;animation:feedIn .25s ease-out;max-width:62vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #mpFeed b{color:var(--flame);font-weight:700}#mpFeed .k{color:#ff7a5c}
 @keyframes feedIn{from{transform:translateX(-12px);opacity:0}}
@@ -278,6 +278,13 @@ html,body{height:100%;overflow:hidden;background:#2f6b2a;color:var(--ink);font-f
 .mprooms .empty{cursor:default;color:var(--mist);border:0;background:none;justify-content:center}
 .mprules{margin:0;padding:0;list-style:none;text-align:left;display:grid;gap:4px;font-family:var(--pixbody);font-size:14px;color:var(--parch)}
 .mprules b{color:var(--flame);font-weight:600}
+/* jauge de pouvoir (K.O.) */
+#spw{margin-top:6px;font-family:var(--pix);font-weight:700;font-size:clamp(11px,2.6vw,14px);color:#ff9fd6;display:flex;align-items:center;gap:5px;white-space:nowrap}
+#spw i{width:clamp(14px,3.4vw,20px);height:clamp(10px,2.2vw,13px);border:2px solid #07040b;background:#3b2a1d;border-radius:2px;display:inline-block}
+#spw i.on{background:linear-gradient(#ffd0ec,#ff5fb8)}
+#spw.ready{color:#ffe066;animation:pulse .45s ease-in-out infinite alternate}#spw.ready i{background:linear-gradient(#fff3a8,#ffb52e)}
+#spw.on{color:#ffe066}
+#bSup{background:radial-gradient(circle at 35% 30%,#ffb8e2,#a2246e);font-size:14px}
 /* manches : chrono, compte à rebours, podium */
 #mpTimer{position:fixed;left:50%;top:calc(96px + env(safe-area-inset-top,0px));transform:translateX(-50%);pointer-events:none;font-family:var(--pix);font-weight:700;font-size:clamp(15px,3.6vw,22px);
   color:var(--parch);background:rgba(13,9,18,.62);border:2px solid #3a2d52;border-radius:3px;padding:3px 10px;white-space:nowrap;text-align:center}
@@ -318,6 +325,7 @@ html,body{height:100%;overflow:hidden;background:#2f6b2a;color:var(--ink);font-f
   <div>
     <div class="score out">SCORE <b id="score">00000</b></div>
     <div class="hearts" id="hearts"></div>
+    <div id="spw" hidden></div>
   </div>
   <div class="gauge" id="gauge">
     <div class="glabel out">PROUT</div>
@@ -337,6 +345,7 @@ html,body{height:100%;overflow:hidden;background:#2f6b2a;color:var(--ink);font-f
   <div class="act" id="bCaca" role="button" aria-label="Poser un caca">CACA<small id="bCacaN">×0</small><span class="kb deskOnly">C</span></div>
   <div class="act" id="bProut" role="button" aria-label="Lâcher un prout">PROUT<small id="bProutN">0/5</small><span class="kb deskOnly">ESPACE</span></div>
   <div class="act ready" id="bTir" role="button" aria-label="Tirer à l'arbalète" hidden>TIR<small>auto</small></div>
+  <div class="act" id="bSup" role="button" aria-label="Activer le pouvoir" hidden>POUVOIR<small id="bSupN">0/3</small><span class="kb deskOnly">E</span></div>
 </div>
 <div id="mpBoard" hidden></div>
 <div id="mpFeed" hidden></div>
@@ -412,6 +421,7 @@ html,body{height:100%;overflow:hidden;background:#2f6b2a;color:var(--ink);font-f
       <li><b>Friandises :</b> +1 cœur et la jauge de prout. Le prout étourdit les autres.</li>
       <li><b>Café :</b> coup de boost et un caca piégé à poser.</li>
       <li><b>Super-pâtisseries dorées :</b> éclair = tir rapide, glace = tir triple, donut = bouclier.</li>
+      <li><b>Pouvoir du perso :</b> 3 K.O. remplissent la jauge, puis 6 s de voiture, Vespa, machette, Opinel, gode, tournevis ou bouclier !</li>
     </ul>
     <p class="hint" id="mpCtrl"></p>
     <div class="field"><label for="mpRoom">Code de la salle</label><input id="mpRoom" maxlength="8" autocomplete="off" spellcheck="false" placeholder="GAZ"></div>
@@ -783,8 +793,8 @@ cvs.addEventListener("pointerdown",e=>{if(e.pointerType!=="mouse"){touchMode=tru
 cvs.addEventListener("pointermove",e=>{if(MP)mpPointer("move",e);if(joy.on&&e.pointerId===joy.id){joy.x=e.clientX;joy.y=e.clientY}});
 const endJoy=e=>{if(MP)mpPointer("up",e);if(e.pointerId===joy.id){joy.on=false;joy.id=null}};cvs.addEventListener("pointerup",endJoy);cvs.addEventListener("pointercancel",endJoy);
 const press=(el,fn)=>el.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();audio();if((running&&!paused)||MP)fn()});
-press($("bProut"),()=>doProut());press($("bCaca"),()=>doCaca());
-function applyTouchUI(){$("pad").hidden=!(running||MP);$("bTir").hidden=!(MP&&touchMode);document.querySelectorAll(".deskOnly").forEach(el=>el.hidden=touchMode);
+press($("bProut"),()=>doProut());press($("bCaca"),()=>doCaca());press($("bSup"),()=>{if(MP)mpAction("super")});
+function applyTouchUI(){$("pad").hidden=!(running||MP);$("bTir").hidden=!(MP&&touchMode);$("bSup").hidden=!MP;document.querySelectorAll(".deskOnly").forEach(el=>el.hidden=touchMode);
   $("ctrlHint").textContent=touchMode?"Glisse le doigt à gauche pour courir · boutons PROUT et CACA à droite":"Flèches ou ZQSD pour courir · Espace : prout · C : caca"}
 applyTouchUI();
 function inputVec(){let x=0,y=0;const k=keysDown;if(k.has("arrowleft")||k.has("q")||k.has("a"))x--;if(k.has("arrowright")||k.has("d"))x++;if(k.has("arrowup")||k.has("z")||k.has("w"))y--;if(k.has("arrowdown")||k.has("s"))y++;
@@ -1097,13 +1107,22 @@ const MP_PING_MS=3000;
 const MPW={rapid:{label:"TIR RAPIDE",name:"Éclair foudroyant",item:"eclair",col:"#ffb02e",time:7,fireCd:.22},
   triple:{label:"TIR TRIPLE",name:"Glace triple boule",item:"gelato",col:"#ff7ad9",time:7,spread:.2},
   armor:{label:"BOUCLIER",name:"Donut bouclier",item:"donut",col:"#ffe066",time:6}};
+// pouvoirs des persos en Bataille (jauge de K.O.)
+const SUPC={sucre:{k:"ram",pwr:"car",verb:"a écrasé"},italien:{k:"ram",pwr:"vespa",verb:"a renversé"},sale:{k:"melee",pwr:"hammer",verb:"a découpé"},
+  arthur:{k:"melee",pwr:"dildo",verb:"a assommé"},gargar:{k:"melee",pwr:"opinel",verb:"a tranché"},yonarie:{k:"melee",pwr:"screw",verb:"a dévissé"},mihide:{k:"guard",pwr:"shield",verb:"a eu"}};
+const supOf=ch=>SUPC[ch]||SUPC.sucre;
+const supDesc={ram:"fonce dans les autres pour les renverser",melee:"K.O. en un coup au contact",guard:"invulnérable, tu renvoies les carreaux"};
+const chOf=id=>id===MP.id?chKey:((MP.roster.get(id)||{}).ch||"sucre");
+function mpQuoi(o){if(o)txt(o.x,o.y-150,"QUOIIII !","#ff9fd6");if(muted)return;const d=o?Math.hypot(o.x-MP.me.x,o.y-MP.me.y):0;if(d>900)return;
+  let spoke=false;try{if(window.speechSynthesis&&window.SpeechSynthesisUtterance){const u=new SpeechSynthesisUtterance("Quoiiiiii !");u.lang="fr-FR";u.pitch=1.7;u.rate=.9;u.volume=Math.max(.2,1-d/900);speechSynthesis.cancel();speechSynthesis.speak(u);spoke=true}}catch(e){}
+  if(!spoke){VOLK=Math.max(.2,1-d/900);tone(320,760,.45,"sawtooth",.07);tone(640,1500,.45,"square",.025);VOLK=1}}
 const mpw=k=>{const d=MPW[k];if(!d)return null;const sv=MP&&MP.rules.pow&&MP.rules.pow[k];return sv?Object.assign({},d,sv,{item:d.item}):d};
 
 /* ---------- écran « Bataille » ---------- */
 let roomsTimer=null;
 function openMP(){if(!askPseudo())return;audio();$("startS").hidden=true;$("mpS").hidden=false;
   let rc="GAZ";try{rc=localStorage.getItem("gef_room")||"GAZ"}catch(e){}$("mpRoom").value=rc;
-  $("mpCtrl").textContent=touchMode?"Doigt à gauche : courir · doigt à droite : viser et tirer · TIR : tir automatique":"ZQSD ou flèches : courir · souris : viser · clic : tirer · Espace : prout · C : caca";
+  $("mpCtrl").textContent=touchMode?"Doigt à gauche : courir · doigt à droite : viser et tirer · TIR : tir automatique":"ZQSD ou flèches : courir · souris : viser · clic : tirer · Espace : prout · C : caca · E : pouvoir";
   const u=mpUrl(),msg=$("mpMsg");msg.className="save";msg.textContent="";$("mpJoin").disabled=!u;
   if(!u){msg.className="save bad";msg.textContent="Le serveur multijoueur n'est pas encore branché : ajoute son adresse (multiUrl) dans config.js.";$("mpRooms").replaceChildren();return}
   loadMpImgs();refreshRooms(true);clearInterval(roomsTimer);roomsTimer=setInterval(()=>{if($("mpS").hidden){clearInterval(roomsTimer);return}refreshRooms(false)},4000);$("mpJoin").focus()}
@@ -1146,13 +1165,13 @@ function mpStart(ws,m){
     fireHeld:false,tirHeld:false,tapFire:false,hitMark:0,hudSig:"",boardSig:"",killedBy:0,leader:0,
     powers:new Map(),phase:"wait",phaseT:0,phaseAt:performance.now(),round:0,podSig:"",endWhy:"",roundSig:"",timerSig:""};
   cam.x=m.x;cam.y=m.y;keysDown.clear();
-  $("mpS").hidden=true;$("startS").hidden=true;$("overS").hidden=true;$("hud").hidden=false;$("mpBoard").hidden=false;$("mpFeed").hidden=false;$("mpFeed").replaceChildren();$("mpTimer").hidden=false;
+  $("mpS").hidden=true;$("startS").hidden=true;$("overS").hidden=true;$("hud").hidden=false;$("mpBoard").hidden=false;$("mpFeed").hidden=false;$("mpFeed").replaceChildren();$("mpTimer").hidden=false;$("spw").hidden=false;
   $("score").parentElement.firstChild.textContent="K.O. ";$("carT").hidden=true;
   $("pauseT").textContent="Menu";$("pauseHint").hidden=false;$("quitMP").hidden=false;
   applyTouchUI();mpHud();feed(`Tu entres dans la salle <b>${esc(MP.room)}</b>`);
   if(touchMode&&document.documentElement.requestFullscreen&&!document.fullscreenElement){document.documentElement.requestFullscreen().catch(()=>{})}}
 function mpCleanup(){if(!MP)return;const ws=MP.ws;MP=null;try{ws.onclose=null;ws.close()}catch(e){}
-  joy.on=false;keysDown.clear();$("hud").hidden=true;$("mpBoard").hidden=true;$("mpFeed").hidden=true;$("mpDead").hidden=true;$("mpTimer").hidden=true;$("mpRound").hidden=true;$("mpPodium").hidden=true;$("pauseS").hidden=true;
+  joy.on=false;keysDown.clear();$("hud").hidden=true;$("mpBoard").hidden=true;$("mpFeed").hidden=true;$("mpDead").hidden=true;$("mpTimer").hidden=true;$("spw").hidden=true;$("mpRound").hidden=true;$("mpPodium").hidden=true;$("pauseS").hidden=true;
   $("score").parentElement.firstChild.textContent="SCORE ";$("pauseT").textContent="Pause";$("pauseHint").hidden=true;$("quitMP").hidden=true;applyTouchUI()}
 function mpQuit(){mpCleanup();$("startS").hidden=false;$("openMP").focus()}
 function mpLost(){mpCleanup();openMP();const msg=$("mpMsg");msg.className="save bad";msg.textContent="Connexion perdue. Tu peux rejoindre à nouveau."}
@@ -1172,7 +1191,7 @@ function mpMsg(m){if(!MP)return;const now=performance.now();
   const mine=pm.get(MP.id),P=MP.me;
   if(mine){const f=mine[6];const wasAlive=P.alive;P.alive=!!(f&1);P.shield=!!(f&4);P.stun=!!(f&8);P.boost=!!(f&16);P.hit=!!(f&32);
     P.hp=mine[7];P.gauge=mine[8];P.cafe=mine[9];if(mine[10]&&mine[10]!=="aim"&&P.act!==mine[10]){P.act=mine[10];P.actT=mine[10]==="fart"?.55:mine[10]==="poop"?.5:.3}P.deadT=mine[11];
-    P.pw=mine[12]||"";P.pwT=mine[13]||0;
+    P.pw=mine[12]||"";P.pwT=mine[13]||0;P.pk=mine[14]||0;P.spT=mine[15]||0;
     if(wasAlive&&!P.alive){P.vx=P.vy=0}}
   if(m.w){const pw=new Map();for(const [id,x,y,k] of m.w)pw.set(id,MP.powers.get(id)||{x,y,k,ph:R()*6,born:0});MP.powers=pw}
   if(m.g){const [ph,t,n]=m.g;MP.phase=ph;MP.phaseT=t;MP.phaseAt=now;MP.round=n}
@@ -1195,7 +1214,8 @@ function mpEvent(e){const me=MP.id,P=MP.me;
       if(e.id===me){P.kbx+=e.kx||0;P.kby+=e.ky||0;cam.shake=14;SFX.hit();P.flash=.25}else atPos(v,SFX.hit);
       if(e.by===me&&e.id!==me){MP.hitMark=.3;SFX.tic()}break}
     case "kill":{const v=posOf(e.id);if(v){MP.parts.push({x:v.x,y:v.y-60,vx:0,vy:-60,r:0,skull:1,t:0,life:1.2});puff(v.x,v.y-30,"#e9e2d5",14)}
-      const how=e.kind==="poop"?"a piégé":"a eu";
+      const how=e.kind==="poop"?"a piégé":(e.kind==="ram"||e.kind==="melee")?supOf(chOf(e.by)).verb:"a eu";
+      if((e.kind==="ram"||e.kind==="melee")&&v){const pl=PWR[supOf(chOf(e.by)).pwr]||{};txt(v.x,v.y-110,(pl.hit||"BAM ! +").replace(/\s*\+$/,""),"#ff9a4d");burst(v.x,v.y-40,"#ffe066",14,300);if(e.kind==="ram")atPos(v,SFX.squash);else atPos(v,SFX.bonk)}
       if(e.by&&e.by!==e.id)feed(`<b>${esc(nameOf(e.by))}</b> <span class="k">${how}</span> ${esc(nameOf(e.id))}`);else feed(`${esc(nameOf(e.id))} <span class="k">est K.O.</span>`);
       if(e.id===me){MP.killedBy=e.by;SFX.down();cam.shake=16}
       if(e.by===me&&e.id!==me){SFX.ko();if(v)txt(v.x,v.y-160,"K.O. !","#ffcf3a");if(e.streak>=3)toast(e.streak>=5?"Inarrêtable ! "+e.streak+" K.O. d'affilée":"Série de "+e.streak+" K.O. !")}
@@ -1215,6 +1235,13 @@ function mpEvent(e){const me=MP.id,P=MP.me;
     case "power":{const d=mpw(e.p);if(!d)break;burst(e.x,e.y-30,d.col,16,260);
       if(e.id===me){tone(500,1400,.3,"triangle",.12);tone(800,1800,.25,"triangle",.1,.12);txt(P.x,P.y-130,d.label+" !",d.col);toast(d.name+" : "+d.label.toLowerCase()+" pendant "+d.time+" s")}
       else{atPos(posOf(e.id),SFX.eat);feed(`<b>${esc(nameOf(e.id))}</b> prend ${esc(d.name)}`)}break}
+    case "superok":if(e.id===me){txt(P.x,P.y-150,"POUVOIR PRÊT !","#ffe066");[660,880,1100].forEach((f,i)=>tone(f,f,.12,"triangle",.1,i*.09));toast(touchMode?"Pouvoir prêt ! Appuie sur POUVOIR":"Pouvoir prêt ! Appuie sur E")}break;
+    case "super":{const o=posOf(e.id),c=supOf(chOf(e.id)),pl=PWR[c.pwr]||{};if(o){burst(o.x,o.y-50,"#ffe066",22,320);puff(o.x,o.y-30,"#ffffff",14)}
+      if(e.id===me){cam.shake=12;tone(300,900,.35,"sawtooth",.1);tone(600,1800,.3,"square",.06,.1);txt(P.x,P.y-150,pl.label||"POUVOIR !","#ffe066");toast((pl.label||"POUVOIR").replace(/ !$/,"")+" : "+supDesc[c.k]+" pendant "+((MP.rules.sup||{}).time||6)+" s")}
+      else{atPos(o,()=>tone(300,900,.3,"sawtooth",.08));feed(`<b>${esc(nameOf(e.id))}</b> active son pouvoir : <span class="k">${esc((pl.label||"POUVOIR").replace(/ !$/,""))}</span>`)}break}
+    case "superend":if(e.id===me){const pl=PWR[supOf(chKey).pwr]||{};txt(P.x,P.y-130,pl.end||"Fin du pouvoir","#fff6e0")}break;
+    case "quoi":mpQuoi(posOf(e.id));break;
+    case "reflect":{txt(e.x,e.y-130,"RENVOYÉ !","#ffe066");atPos(e,SFX.tic);break}
     case "rcount":MP.endWhy="";MP.bolts=[];feed(`Manche <b>${e.n}</b> : prêts ?`);break;
     case "rgo":tone(400,900,.18,"square",.12);tone(900,1500,.3,"square",.12,.15);mpRoundFlash("GO !","Manche "+e.n);break;
     case "rend":{MP.endWhy=e.why;MP.winner=e.win;const iw=e.win===me;
@@ -1224,8 +1251,8 @@ function mpEvent(e){const me=MP.id,P=MP.me;
   }}
 
 /* ---------- entrées ---------- */
-function mpKey(k){if(k===" ")mpAction("prout");else if(k==="c")mpAction("caca");else if(k==="escape"||k==="p")setPause(true)}
-function mpAction(kind){if(!MP||!MP.me.alive)return;if(kind==="prout"&&MP.me.gauge<5)return;if(kind==="caca"&&MP.me.cafe<1)return;send({t:kind})}
+function mpKey(k){if(k===" ")mpAction("prout");else if(k==="c")mpAction("caca");else if(k==="e")mpAction("super");else if(k==="escape"||k==="p")setPause(true)}
+function mpAction(kind){if(!MP||!MP.me.alive)return;if(kind==="prout"&&MP.me.gauge<5)return;if(kind==="caca"&&MP.me.cafe<1)return;if(kind==="super"&&((MP.me.pk||0)<((MP.rules.sup||{}).need||3)||MP.me.spT>0))return;send({t:kind})}
 function mpPointer(type,e){if(!MP)return;const A=MP.aim;
   if(e.pointerType==="mouse"){MP.mouse.x=e.clientX;MP.mouse.y=e.clientY;MP.mouse.on=true;
     if(type==="down"&&e.button===0){MP.fireHeld=true;audio()}if(type==="up"&&e.button===0)MP.fireHeld=false;return}
@@ -1247,7 +1274,9 @@ function autoAim(){const P=MP.me;let best=null,bd=780;
 /* ---------- simulation locale ---------- */
 function mpUpdate(dt){const P=MP.me,Rl=MP.rules;MP.t+=dt;const now=performance.now();
   let iv=inputVec();if(!P.alive||!$("pauseS").hidden&&!touchMode)iv={x:0,y:0};
-  const sp=(Rl.speed||265)*(P.boost?(Rl.boost||1.35):1)*(P.stun?.4:1)*(P.act==="eat"?.75:1);
+  const sk=P.spT>0?supOf(chKey).k:"",sm=sk?(((Rl.sup||{}).speed||{})[sk]||1.3):1;
+  if(P.spT>0)P.spT=Math.max(0,P.spT-dt);
+  const sp=(Rl.speed||265)*sm*(P.boost?(Rl.boost||1.35):1)*(P.stun&&sk!=="ram"&&sk!=="guard"?.4:1)*(P.act==="eat"?.75:1);
   P.vx+=(iv.x*sp-P.vx)*Math.min(1,dt*12);P.vy+=(iv.y*sp-P.vy)*Math.min(1,dt*12);
   P.kbx*=Math.pow(.02,dt);P.kby*=Math.pow(.02,dt);
   if(P.alive){P.x+=(P.vx+P.kbx)*dt;P.y+=(P.vy+P.kby)*dt;collide(P)}
@@ -1266,7 +1295,7 @@ function mpUpdate(dt){const P=MP.me,Rl=MP.rules;MP.t+=dt;const now=performance.n
   if(MP.tapFire){P.a=autoAim();P.face=Math.cos(P.a)>=0?1:-1}
   const fight=MP.phase==="play"||MP.phase==="wait";if(!fight)MP.tapFire=false;
   if(P.pwT>0){P.pwT=Math.max(0,P.pwT-dt);if(P.pwT<=0)P.pw=""}
-  if(want&&fight&&P.cd<=0&&P.alive&&!P.stun&&$("pauseS").hidden){mpFire();MP.tapFire=false}else if(MP.tapFire&&P.cd>.3)MP.tapFire=false;
+  if(want&&fight&&sk!=="ram"&&P.cd<=0&&P.alive&&!P.stun&&$("pauseS").hidden){mpFire();MP.tapFire=false}else if(MP.tapFire&&P.cd>.3)MP.tapFire=false;
   // envoi de la position (20 fois par seconde)
   MP.sendT-=dt;if(MP.sendT<=0){MP.sendT=.05;send({t:"st",x:Math.round(P.x*10)/10,y:Math.round(P.y*10)/10,vx:Math.round(P.vx+P.kbx),vy:Math.round(P.vy+P.kby),a:Math.round(P.a*100)/100,mv:mv>30?1:0,sn:P.sn})}
   MP.pingT-=dt;if(MP.pingT<=0){MP.pingT=MP_PING_MS/1000;send({t:"ping",c:Math.round(now)})}
@@ -1305,16 +1334,20 @@ function mpInterp(dt){const sn=MP.snaps;if(!sn.length)return;const rt=performanc
   const k=a===b?1:clamp((rt-a.recv)/((b.recv-a.recv)||1),0,1.15);const seen=new Set();
   for(const [id,pb] of b.p){if(id===MP.id)continue;seen.add(id);const pa=a.p.get(id)||pb;let o=MP.others.get(id);if(!o){o={id,anim:0,x:pb[1],y:pb[2],a:pb[5]};MP.others.set(id,o)}
     const jump=Math.hypot(pb[1]-pa[1],pb[2]-pa[2])>260,kk=jump?1:k;o.x=pa[1]+(pb[1]-pa[1])*kk;o.y=pa[2]+(pb[2]-pa[2])*kk;o.vx=pb[3];o.vy=pb[4];
-    let da=pb[5]-pa[5];da=Math.atan2(Math.sin(da),Math.cos(da));o.a=pa[5]+da*Math.min(1,kk);o.f=pb[6];o.hp=pb[7];o.act=pb[10];o.pw=pb[12]||"";
+    let da=pb[5]-pa[5];da=Math.atan2(Math.sin(da),Math.cos(da));o.a=pa[5]+da*Math.min(1,kk);o.f=pb[6];o.hp=pb[7];o.act=pb[10];o.pw=pb[12]||"";o.sp=pb[15]||0;
     o.anim+=dt*(Math.hypot(o.vx,o.vy)/26)}
   for(const id of [...MP.others.keys()])if(!seen.has(id))MP.others.delete(id)}
 
 /* ---------- HUD ---------- */
 function mpHud(){if(!MP)return;const P=MP.me,r=MP.roster.get(MP.id)||{kills:0,deaths:0};
-  const pw=P.pwT>0?mpw(P.pw):null;
-  const sig=[P.hp,P.gauge,P.cafe,r.kills,P.alive,touchMode,pw?P.pw+Math.ceil(P.pwT*10):""].join("|");if(sig===MP.hudSig)return;MP.hudSig=sig;
+  let pw=P.pwT>0?mpw(P.pw):null;const need=(MP.rules.sup||{}).need||3,stime=(MP.rules.sup||{}).time||6,spl=PWR[supOf(chKey).pwr]||{};
+  if(P.spT>0)pw={label:spl.label||"POUVOIR !",time:stime,sup:1};const pwT=P.spT>0?P.spT:P.pwT;
+  const sig=[P.hp,P.gauge,P.cafe,r.kills,P.alive,touchMode,pw?pw.label+Math.ceil(pwT*10):"",P.pk,P.spT>0].join("|");if(sig===MP.hudSig)return;MP.hudSig=sig;
+  const pk=Math.min(need,P.pk||0),ready=pk>=need&&!(P.spT>0),sw=$("spw");sw.className=ready?"ready":P.spT>0?"on":"";
+  sw.innerHTML=P.spT>0?"POUVOIR ACTIF":ready?("POUVOIR PRÊT !"+(touchMode?"":" <span class='key'>E</span>")):("POUVOIR "+Array.from({length:need},(_,i)=>`<i class="${i<pk?"on":""}"></i>`).join(""));
+  $("bSup").classList.toggle("ready",ready);$("bSupN").textContent=P.spT>0?"ACTIF":ready?"PRÊT !":pk+"/"+need;
   $("score").textContent=String(r.kills).padStart(3,"0");$("hearts").innerHTML=[0,1,2].map(i=>heartSVG(i<P.hp)).join("");
-  if(pw){$("carT").hidden=false;$("carL").textContent=pw.label;const sx=Math.ceil(P.pwT);if($("carS").textContent!=sx)$("carS").textContent=sx;$("carBar").style.transform=`scaleX(${Math.min(1,P.pwT/pw.time)})`}
+  if(pw){$("carT").hidden=false;$("carL").textContent=pw.label;const sx=Math.ceil(pwT);if($("carS").textContent!=sx)$("carS").textContent=sx;$("carBar").style.transform=`scaleX(${Math.min(1,pwT/pw.time)})`}
   [...$("bar").children].forEach((s,i)=>s.classList.toggle("on",i<P.gauge));const full=P.gauge>=5;$("gauge").classList.toggle("full",full);
   if(!pw)$("carT").hidden=true;$("bar").hidden=false;$("gsub").hidden=false;$("bar").parentElement.querySelector(".glabel").hidden=false;$("cafe").style.opacity=1;
   $("gsub").innerHTML=full?(touchMode?"PRÊT ! appuie sur PROUT":"PRÊT ! <span class='key'>ESPACE</span>"):`${P.gauge}/5 friandises`;
@@ -1370,7 +1403,23 @@ function fighterImg(o,isMe,tt){const ch=(isMe?chKey:(MP.roster.get(o.id)||{}).ch
   else if(mv>30){key=SP.run[Math.floor(o.anim)%SP.run.length];b=Math.abs(Math.sin(o.anim*Math.PI))*4}
   else if(act==="aim"||(isMe&&(MP.fireHeld||MP.aim.on)))key=SP.aim;else{key=SP.idle;b=Math.sin(tt*2.5+(o.id||0))*1.2}
   const img=IMG[key]&&IMG[key].width?IMG[key]:IMG[(CHARS[ch]||CHARS.sucre).spr.idle];return{img,h:img.height*mpScale(IMG[key]&&IMG[key].width?key:"idle"),b,alive}}
-function drawFighter(o,isMe,tt){const f=isMe?((o.shield?4:0)|(o.stun?8:0)|((o.flash||0)>0||o.hit?32:0)|(o.alive?1:0)):o.f;
+// perso en mode pouvoir : mêmes images que le pouvoir du mode solo
+function drawSuper(o,isMe,tt){const alive=isMe?o.alive:!!(o.f&1),on=isMe?o.spT>0:o.sp>0;if(!alive||!on)return false;
+  const c=supOf(chOf(isMe?MP.id:o.id)),left=isMe?o.spT:o.sp,blink=left<1.5&&Math.floor(tt*8)%2===0,al=blink?.5:1;
+  const vx=o.vx||0,vy=o.vy||0,v=Math.hypot(vx,vy),face=Math.cos(o.a||0)>=0?1:-1;
+  ctx.globalAlpha=.3+Math.sin(tt*8)*.08;ctx.fillStyle="#ffe066";ctx.beginPath();ctx.ellipse(o.x,o.y+4,c.k==="ram"?66:46,c.k==="ram"?20:15,0,0,7);ctx.fill();ctx.globalAlpha=1;
+  if(c.pwr==="car"){const a=(v>30?Math.atan2(vy,vx):(face>0?0:Math.PI))*180/Math.PI;let k,fl=false,h;
+    if(a>-22.5&&a<=22.5){k=v>330?"car_rf":"car_r";h=80}else if(a>22.5&&a<=67.5){k="car_dr";h=110}else if(a>67.5&&a<=112.5){k="car_d";h=104}else if(a>112.5&&a<=157.5){k="car_dr";fl=true;h=110}
+    else if(a>157.5||a<=-157.5){k=v>330?"car_rf":"car_r";fl=true;h=80}else if(a>-157.5&&a<=-112.5){k="car_ur";fl=true;h=110}else if(a>-112.5&&a<=-67.5){k="car_u";h=104}else{k="car_ur";h=110}
+    shadow(o.x,o.y+8,46);spr(IMG[k],o.x,o.y+22-(v>60?Math.abs(Math.sin(tt*22))*1.5:0),h,fl,0,al)}
+  else if(c.pwr==="vespa"){let k,b=0;const fv=v>30?(vx>=0?1:-1):face;if(v<30){k="v_1";b=Math.sin(tt*3)}else if(vy>0&&vy>Math.abs(vx)*1.3)k="v_5";else{k="v_"+[2,3,4,6,7][Math.floor((o.anim||0)*.8)%5];b=Math.abs(Math.sin(tt*18))*2}
+    const im=IMG[k];shadow(o.x,o.y,40);spr(im,o.x,o.y+10-b,im.height*.66,fv<0,0,al)}
+  else{const PS=PWR[c.pwr];let im,b=0;if(v>30){im=IMG[PS.run+(1+Math.floor((o.anim||0)*1.3)%PS.n)];b=Math.abs(Math.sin((o.anim||0)*Math.PI))*4}else{im=IMG[PS.idle];b=Math.sin(tt*2.5)*1.2}
+    if(!im||!im.width)return false;shadow(o.x,o.y,28);spr(im,o.x,o.y-b,im.height*.55,face<0,0,al);
+    if(c.k==="guard"){ctx.globalAlpha=.3+Math.sin(tt*7)*.1;ctx.strokeStyle="#ffe066";ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(o.x,o.y-55,52,72,0,0,7);ctx.stroke();ctx.fillStyle="rgba(255,224,102,.14)";ctx.fill();ctx.globalAlpha=1}}
+  for(let i=0;i<6;i++){const a=tt*4+i*1.05,r=40+Math.sin(tt*9+i)*5;ctx.fillStyle=i%2?"#ffe066":"#ff9fd6";ctx.globalAlpha=.85;ctx.beginPath();ctx.arc(o.x+Math.cos(a)*r,o.y-50+Math.sin(a)*r*.45,3.5,0,7);ctx.fill()}
+  ctx.globalAlpha=1;return true}
+function drawFighter(o,isMe,tt){if(drawSuper(o,isMe,tt))return;const f=isMe?((o.shield?4:0)|(o.stun?8:0)|((o.flash||0)>0||o.hit?32:0)|(o.alive?1:0)):o.f;
   const {img,h,b,alive}=fighterImg(o,isMe,tt);const face=Math.cos(o.a||0)>=0?1:-1;
   shadow(o.x,o.y,alive?28:34);
   if(isMe&&alive){ctx.globalAlpha=.22;ctx.strokeStyle="#ffcf3a";ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(o.x,o.y+2,34,11,0,0,7);ctx.stroke();ctx.globalAlpha=1}

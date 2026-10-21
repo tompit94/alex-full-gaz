@@ -94,7 +94,11 @@ Jusqu'à **10 joueurs** dans la même salle, sur la même carte, sans monstres. 
 
 - **Manches** : dès qu'il y a 2 joueurs, compte à rebours de 4 s, puis manche de 3 min. Le plus de K.O. gagne, ou le premier à 15. Podium pendant 10 s, puis nouvelle manche (scores remis à zéro).
 - **Super-pâtisseries dorées** (2 max sur la carte) : *Éclair foudroyant* = tir rapide 7 s, *Glace triple boule* = 3 carreaux en éventail 7 s, *Donut bouclier* = invulnérable 6 s.
-- Réglages dans `server/server.js` (objets `ROUND` et `POW`).
+- **Pouvoir du perso** : chaque K.O. remplit la jauge, à 3 K.O. le pouvoir est prêt (touche **E** ou bouton POUVOIR) et dure 6 s :
+  - Alex (voiture) et Nini (Vespa) : très rapides, renversent au contact, pas de tir, insensibles au prout ;
+  - Greg (machette), Arthur (gode), Gargar (Opinel), Yonarie (tournevis) : plus rapides, K.O. en un coup au contact ; Yonarie crie « QUOIIII » et étourdit autour d'elle ;
+  - Mihide (bouclier) : invulnérable, renvoie les carreaux à l'envoyeur.
+- Réglages dans `server/server.js` (objets `ROUND`, `POW` et `SUPER`).
 
 **Règles**
 
@@ -139,6 +143,7 @@ cd server
 npm install
 npm start                      # serveur sur le port 8080
 ROUND_TIME=30 npm start        # (test) manches de 30 s au lieu de 3 min
+TEST_SUPER=1 npm start         # (test) jauge de pouvoir toujours pleine
 node bots.js 4                 # (optionnel) 4 robots qui se battent dans la salle GAZ
 ```
 
