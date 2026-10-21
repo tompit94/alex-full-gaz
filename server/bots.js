@@ -12,7 +12,7 @@ function bot(i) {
   const ws = new WebSocket(URL);
   const me = { id: 0, x: 0, y: 0, vx: 0, vy: 0, r: 22, a: 0, sn: 0, alive: true, tx: 0, ty: 0, cd: 0 };
   let others = [];
-  ws.on("open", () => ws.send(JSON.stringify({ t: "join", room: ROOM, name: NAMES[i % NAMES.length], ch: ["sucre", "sale", "italien", "mihide", "yonarie", "arthur"][i % 6] })));
+  ws.on("open", () => ws.send(JSON.stringify({ t: "join", room: ROOM, name: NAMES[i % NAMES.length], ch: ["sucre", "sale", "italien", "mihide", "yonarie", "arthur", "gargar"][i % 7] })));
   ws.on("message", raw => {
     const m = JSON.parse(raw);
     if (m.t === "welcome") { me.id = m.id; me.x = m.x; me.y = m.y; pickTarget(); }
