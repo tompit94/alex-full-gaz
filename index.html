@@ -278,6 +278,17 @@ html,body{height:100%;overflow:hidden;background:#2f6b2a;color:var(--ink);font-f
 .mprooms .empty{cursor:default;color:var(--mist);border:0;background:none;justify-content:center}
 .mprules{margin:0;padding:0;list-style:none;text-align:left;display:grid;gap:4px;font-family:var(--pixbody);font-size:14px;color:var(--parch)}
 .mprules b{color:var(--flame);font-weight:600}
+/* choix du mode : chacun pour soi / coopération */
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.md{font:inherit;cursor:pointer;display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:8px;align-items:center;text-align:left;padding:7px 9px;border-radius:2px;border:3px solid #3a2d52;background:rgba(0,0,0,.35);color:var(--parch);min-width:0}
+.md .ic{grid-row:1/3;font-size:24px;line-height:1}
+.md b{font-family:var(--pix);font-weight:700;font-size:13px;text-transform:uppercase}
+.md small{font-family:var(--pixbody);font-size:12px;color:var(--mist)}
+.md[aria-checked="true"]{border-color:#7fd4ff;background:rgba(90,190,255,.12);box-shadow:0 0 14px rgba(90,190,255,.25)}
+.md[aria-checked="true"] b{color:#7fd4ff}
+.md:focus-visible{outline:2px dashed #7fd4ff;outline-offset:3px}
+@media (max-width:420px){.md .ic{font-size:18px}.md b{font-size:11px}.md small{font-size:11px}}
+.mprooms li .mo{font-family:var(--pixbody);font-size:12px;color:#7fd4ff;margin-left:6px}
 /* jauge de pouvoir (K.O.) */
 #spw{margin-top:6px;font-family:var(--pix);font-weight:700;font-size:clamp(11px,2.6vw,14px);color:#ff9fd6;display:flex;align-items:center;gap:5px;white-space:nowrap}
 #spw i{width:clamp(14px,3.4vw,20px);height:clamp(10px,2.2vw,13px);border:2px solid #07040b;background:#3b2a1d;border-radius:2px;display:inline-block}
@@ -386,7 +397,7 @@ body.mpPw #mpTimer{top:calc(150px + env(safe-area-inset-top,0px))}
   <h1 class="sr">Full Gaz !</h1>
   <div class="menu card">
     <button class="mi mi-main" id="play" disabled>Chargement…</button>
-    <button class="mi mi-main mi-mp" id="openMP" disabled>Bataille multi</button>
+    <button class="mi mi-main mi-mp" id="openMP" disabled>Multijoueur</button>
     <div class="pick" role="radiogroup" aria-label="Personnage">
       <button class="pc" type="button" role="radio" data-ch="sucre" aria-checked="true"><img data-hero="idle" alt=""><span><b>Alex</b><small>Viennoiseries · voiture</small></span></button>
       <button class="pc" type="button" role="radio" data-ch="sale" aria-checked="false"><img data-hero="b_idle" alt=""><span><b>Greg</b><small>Pâtes, burgers · machette</small></span></button>
@@ -443,8 +454,19 @@ body.mpPw #mpTimer{top:calc(150px + env(safe-area-inset-top,0px))}
 
 <div class="screen" id="mpS" hidden>
   <div class="card">
-    <h2 class="title">Bataille</h2>
-    <ul class="mprules">
+    <h2 class="title">Multijoueur</h2>
+    <div class="modes" role="radiogroup" aria-label="Mode de jeu">
+      <button class="md" type="button" role="radio" data-mode="versus" aria-checked="true"><span class="ic">⚔️</span><b>Chacun pour soi</b><small>Tous contre tous à l'arbalète</small></button>
+      <button class="md" type="button" role="radio" data-mode="coop" aria-checked="false"><span class="ic">🤝</span><b>Coopération</b><small>Ensemble contre les monstres</small></button>
+    </div>
+    <ul class="mprules" id="rulesCoop" hidden>
+      <li><b>Vagues de monstres</b> de plus en plus grosses, jusqu'à 10 joueurs (ou tout seul). Le croqueur de pomme débarque toutes les 3 vagues !</li>
+      <li><b>Pas de tir ami :</b> carreaux, prouts, cacas et pouvoirs ne touchent que les monstres.</li>
+      <li><b>Une morsure = -1 cœur.</b> K.O., tu reviens 6 s plus tard, et tous les K.O. reviennent entre deux vagues.</li>
+      <li><b>Si toute l'équipe est K.O. en même temps</b>, c'est perdu : podium des meilleurs chasseurs, puis on recommence.</li>
+      <li><b>Pouvoir du perso :</b> 5 monstres éliminés remplissent la jauge.</li>
+    </ul>
+    <ul class="mprules" id="rulesVersus">
       <li><b>Manches de 3 min</b> jusqu'à 10 joueurs : le plus de K.O. gagne, ou le premier à 15. Podium, puis on remet ça !</li>
       <li><b>Arbalète :</b> 3 carreaux et c'est K.O. Tu reviens 3 s plus tard.</li>
       <li><b>Friandises :</b> +1 cœur et la jauge de prout. Le prout étourdit les autres.</li>
@@ -453,6 +475,7 @@ body.mpPw #mpTimer{top:calc(150px + env(safe-area-inset-top,0px))}
       <li><b>Pouvoir du perso :</b> 3 K.O. remplissent la jauge, puis 6 s de voiture, Vespa, machette, Opinel, baguette, gode, tournevis ou bouclier !</li>
     </ul>
     <p class="hint" id="mpCtrl"></p>
+    <p class="hint" id="mpModeHint">Une salle garde le mode choisi par celui qui l'a créée.</p>
     <div class="field"><label for="mpRoom">Code de la salle</label><input id="mpRoom" maxlength="8" autocomplete="off" spellcheck="false" placeholder="GAZ"></div>
     <div class="boardhead"><span>Salles ouvertes</span><span>joueurs</span></div>
     <ul class="mprooms" id="mpRooms"></ul>
@@ -1116,7 +1139,9 @@ $("mute").onclick=()=>{muted=!muted;$("mute").textContent=muted?"🔇":"🔊";tr
 document.addEventListener("visibilitychange",()=>{if(document.hidden)setPause(true)});
 
 /* =====================================================================
-   MULTIJOUEUR : bataille à l'arbalète (jusqu'à 10 joueurs, sans monstres)
+   MULTIJOUEUR (jusqu'à 10 joueurs) : deux modes
+   - « Chacun pour soi » : bataille à l'arbalète, tous contre tous
+   - « Coopération » : tous ensemble contre des vagues de monstres
    Le client calcule son propre déplacement (fluide) ; le serveur décide
    des tirs, des touches, des K.O., des friandises et des réapparitions.
    ===================================================================== */
@@ -1154,10 +1179,17 @@ function mpQuoi(o){if(o)txt(o.x,o.y-150,"QUOIIII !","#ff9fd6");if(muted)return;c
   if(!spoke){VOLK=Math.max(.2,1-d/900);tone(320,760,.45,"sawtooth",.07);tone(640,1500,.45,"square",.025);VOLK=1}}
 const mpw=k=>{const d=MPW[k];if(!d)return null;const sv=MP&&MP.rules.pow&&MP.rules.pow[k];return sv?Object.assign({},d,sv,{item:d.item}):d};
 
-/* ---------- écran « Bataille » ---------- */
-let roomsTimer=null;
+/* ---------- écran « Multijoueur » ---------- */
+let roomsTimer=null,mpMode="versus";try{if(localStorage.getItem("gef_mpmode")==="coop")mpMode="coop"}catch(e){}
+const MODE_LABEL={versus:"Chacun pour soi",coop:"Coopération"};
+function setMpMode(m){mpMode=m==="coop"?"coop":"versus";try{localStorage.setItem("gef_mpmode",mpMode)}catch(e){}
+  document.querySelectorAll(".md").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.mode===mpMode)));
+  $("rulesCoop").hidden=mpMode!=="coop";$("rulesVersus").hidden=mpMode==="coop";
+  const r=$("mpRoom");if(r&&!r.dataset.touched&&!$("mpS").hidden){let rc="";try{rc=localStorage.getItem("gef_room_"+mpMode)||""}catch(e){}r.value=rc||(mpMode==="coop"?"COOP":"GAZ")}}
+document.querySelectorAll(".md").forEach(b=>{b.onclick=()=>{setMpMode(b.dataset.mode);b.focus()};
+  b.onkeydown=e=>{if(e.key==="ArrowLeft"||e.key==="ArrowRight"){e.preventDefault();e.stopPropagation();setMpMode(mpMode==="coop"?"versus":"coop");document.querySelector(`.md[data-mode="${mpMode}"]`).focus()}}});
 function openMP(){if(!askPseudo())return;audio();$("startS").hidden=true;$("mpS").hidden=false;
-  let rc="GAZ";try{rc=localStorage.getItem("gef_room")||"GAZ"}catch(e){}$("mpRoom").value=rc;
+  delete $("mpRoom").dataset.touched;setMpMode(mpMode);
   $("mpCtrl").textContent=touchMode?"Doigt à gauche : courir · doigt à droite : viser et tirer · TIR : tir automatique":"ZQSD ou flèches : courir · souris : viser · clic : tirer · Espace : prout · C : caca · E : pouvoir";
   const u=mpUrl(),msg=$("mpMsg");msg.className="save";msg.textContent="";$("mpJoin").disabled=!u;
   if(!u){msg.className="save bad";msg.textContent="Le serveur multijoueur n'est pas encore branché : ajoute son adresse (multiUrl) dans config.js.";$("mpRooms").replaceChildren();return}
@@ -1169,10 +1201,11 @@ async function refreshRooms(first){const ul=$("mpRooms");
   let rows;try{rows=await fetchRooms(first?20000:6000)}catch(e){if(first){ul.firstChild.textContent="Serveur endormi ou injoignable. « Rejoindre » le réveille."}return}
   ul.replaceChildren();if(!rows.length){const li=document.createElement("li");li.className="empty";li.textContent="Aucune salle ouverte : crée la tienne avec un code !";ul.appendChild(li);return}
   rows.sort((a,b)=>b.n-a.n).forEach(r=>{const li=document.createElement("li");li.tabIndex=0;const full=r.n>=r.max;if(full)li.className="full";
-    const b=document.createElement("b");b.textContent=r.code;const s=document.createElement("span");s.textContent=r.n+"/"+r.max+(full?" · pleine":"");li.append(b,s);
+    const b=document.createElement("b");b.textContent=r.code;const mo=document.createElement("span");mo.className="mo";mo.textContent=r.mode==="coop"?"🤝 coop"+(r.wave?" · vague "+r.wave:""):"⚔️ chacun pour soi";b.appendChild(mo);
+    const s=document.createElement("span");s.textContent=r.n+"/"+r.max+(full?" · pleine":"");li.append(b,s);li.title=MODE_LABEL[r.mode==="coop"?"coop":"versus"];
     const go=()=>{if(full)return;$("mpRoom").value=r.code;mpJoin()};li.onclick=go;li.onkeydown=e=>{if(e.key==="Enter")go()};ul.appendChild(li)})}
 let joining=false;
-async function mpJoin(){if(joining||MP)return;const u=mpUrl();if(!u)return;const code=cleanRoom($("mpRoom").value);$("mpRoom").value=code;try{localStorage.setItem("gef_room",code)}catch(e){}
+async function mpJoin(){if(joining||MP)return;const u=mpUrl();if(!u)return;const code=cleanRoom($("mpRoom").value);$("mpRoom").value=code;try{localStorage.setItem("gef_room_"+mpMode,code)}catch(e){}
   const msg=$("mpMsg"),btn=$("mpJoin");joining=true;btn.disabled=true;msg.className="save";msg.textContent="Connexion à la salle "+code+"…";
   const fail=t=>{joining=false;btn.disabled=false;msg.className="save bad";msg.textContent=t};
   await loadMpImgs();
@@ -1182,7 +1215,7 @@ async function mpJoin(){if(joining||MP)return;const u=mpUrl();if(!u)return;const
   if(!awake){fail("Serveur injoignable. Réessaie dans un instant.");return}
   let ws;try{ws=new WebSocket(u)}catch(e){fail("Adresse du serveur invalide.");return}
   let ok=false,done=false;const to=setTimeout(()=>{if(!ok){done=true;try{ws.close()}catch(e){}fail("Le serveur ne répond pas. Réessaie.")}},15000);
-  ws.onopen=()=>ws.send(JSON.stringify({t:"join",room:code,name:pseudo,ch:chKey}));
+  ws.onopen=()=>ws.send(JSON.stringify({t:"join",room:code,mode:mpMode,name:pseudo,ch:chKey}));
   ws.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return}
     if(!ok){if(m.t==="welcome"){ok=true;clearTimeout(to);joining=false;btn.disabled=false;msg.textContent="";mpStart(ws,m)}
       else if(m.t==="full"){done=true;clearTimeout(to);ws.close();fail("La salle "+m.room+" est pleine ("+m.max+" joueurs). Choisis un autre code.")}
@@ -1194,7 +1227,8 @@ async function mpJoin(){if(joining||MP)return;const u=mpUrl();if(!u)return;const
 /* ---------- démarrage / sortie ---------- */
 function mpStart(ws,m){
   engineStop();running=false;paused=false;S=null;
-  MP={ws,id:m.id,room:m.room,max:m.max||10,rules:m.rules||{},t:0,
+  const mode=m.mode==="coop"?"coop":"versus";
+  MP={ws,id:m.id,room:m.room,max:m.max||10,rules:m.rules||{},t:0,mode,coop:mode==="coop",mons:new Map(),wave:0,left:0,
     me:{x:m.x,y:m.y,vx:0,vy:0,r:22,a:0,kbx:0,kby:0,anim:0,face:1,sn:0,alive:true,hp:3,gauge:0,cafe:0,shield:true,stun:false,boost:false,act:"",actT:0,cd:0,deadT:0,hit:false},
     roster:new Map(),snaps:[],others:new Map(),bolts:[],sbolts:[],items:new Map(),coffee:null,poops:new Map(),clouds:new Map(),
     parts:[],texts:[],embers:[],sendT:0,pingT:0,ping:0,cid:1,aim:{on:false,id:null,x:0,y:0,bx:0,by:0,t0:0},mouse:{x:0,y:0,on:false},
@@ -1204,7 +1238,8 @@ function mpStart(ws,m){
   $("mpS").hidden=true;$("startS").hidden=true;$("overS").hidden=true;$("hud").hidden=false;$("mpBoard").hidden=false;$("mpFeed").hidden=false;$("mpFeed").replaceChildren();$("mpTimer").hidden=false;$("spw").hidden=false;
   $("score").parentElement.firstChild.textContent="K.O. ";$("carT").hidden=true;
   $("pauseT").textContent="Menu";$("pauseHint").hidden=false;$("quitMP").hidden=false;
-  applyTouchUI();mpHud();feed(`Tu entres dans la salle <b>${esc(MP.room)}</b>`);
+  applyTouchUI();mpHud();feed(`Tu entres dans la salle <b>${esc(MP.room)}</b> · ${MP.coop?"🤝 Coopération":"⚔️ Chacun pour soi"}`);
+  if(mode!==mpMode)toast(`La salle ${MP.room} est en mode « ${MODE_LABEL[mode]} »`);
   if(touchMode&&document.documentElement.requestFullscreen&&!document.fullscreenElement){document.documentElement.requestFullscreen().catch(()=>{})}}
 function mpCleanup(){if(!MP)return;const ws=MP.ws;MP=null;try{ws.onclose=null;ws.close()}catch(e){}
   joy.on=false;keysDown.clear();$("hud").hidden=true;$("mpBoard").hidden=true;$("mpFeed").hidden=true;$("mpDead").hidden=true;$("mpTimer").hidden=true;$("spw").hidden=true;document.body.classList.remove("mpPw");$("mpRound").hidden=true;$("mpPodium").hidden=true;$("pauseS").hidden=true;
@@ -1218,19 +1253,20 @@ const nameOf=id=>{const r=MP&&MP.roster.get(id);return r?r.name:"?"};
 
 /* ---------- messages du serveur ---------- */
 function mpMsg(m){if(!MP)return;const now=performance.now();
-  if(m.t==="roster"){const prev=MP.roster;MP.roster=new Map(m.r.map(([id,name,ch,kills,deaths])=>[id,{name,ch,kills,deaths}]));renderMpBoard();mpHud();
+  if(m.t==="roster"){if(m.wv!==undefined)MP.wave=m.wv;const prev=MP.roster;MP.roster=new Map(m.r.map(([id,name,ch,kills,deaths])=>[id,{name,ch,kills,deaths}]));renderMpBoard();mpHud();
     if(m.pod)showPodium(m.pod);else if(MP.podSig){MP.podSig="";$("mpPodium").hidden=true}return}
   if(m.t==="pong"){MP.ping=Math.round(now-m.c);return}
   if(m.t!=="s")return;
   const pm=new Map();for(const a of m.p)pm.set(a[0],a);
-  MP.snaps.push({recv:now,p:pm});if(MP.snaps.length>30)MP.snaps.shift();
+  const mm=m.m?new Map(m.m.map(a=>[a[0],a])):null;
+  MP.snaps.push({recv:now,p:pm,mm});if(MP.snaps.length>30)MP.snaps.shift();
   const mine=pm.get(MP.id),P=MP.me;
   if(mine){const f=mine[6];const wasAlive=P.alive;P.alive=!!(f&1);P.shield=!!(f&4);P.stun=!!(f&8);P.boost=!!(f&16);P.hit=!!(f&32);
     P.hp=mine[7];P.gauge=mine[8];P.cafe=mine[9];if(mine[10]&&mine[10]!=="aim"&&P.act!==mine[10]){P.act=mine[10];P.actT=mine[10]==="fart"?.55:mine[10]==="poop"?.5:.3}P.deadT=mine[11];
     P.pw=mine[12]||"";P.pwT=mine[13]||0;P.pk=mine[14]||0;P.spT=mine[15]||0;
     if(wasAlive&&!P.alive){P.vx=P.vy=0}}
   if(m.w){const pw=new Map();for(const [id,x,y,k] of m.w)pw.set(id,MP.powers.get(id)||{x,y,k,ph:R()*6,born:0});MP.powers=pw}
-  if(m.g){const [ph,t,n]=m.g;MP.phase=ph;MP.phaseT=t;MP.phaseAt=now;MP.round=n}
+  if(m.g){const [ph,t,n,wv,left]=m.g;MP.phase=ph;MP.phaseT=t;MP.phaseAt=now;MP.round=n;if(wv!==undefined)MP.wave=wv;MP.left=left||0}
   // friandises (on garde la phase d'animation de celles qui existaient déjà)
   if(m.i){const items=new Map();for(const [id,x,y,k] of m.i){items.set(id,MP.items.get(id)||{x,y,k,ph:R()*6,born:0})}MP.items=items}
   if(m.c!==undefined)MP.coffee=m.c?(MP.coffee&&Math.abs(MP.coffee.x-m.c[0])<2?MP.coffee:{x:m.c[0],y:m.c[1],ph:0}):null;
@@ -1246,10 +1282,11 @@ function burst(x,y,col,n,sp=200){for(let i=0;i<n;i++){const a=R()*7,s=60+R()*sp;
 function mpEvent(e){const me=MP.id,P=MP.me;
   switch(e.k){
     case "shoot":if(e.id!==me)atPos(posOf(e.id),SFX.twang);break;
-    case "hit":{const v=posOf(e.id);if(v){burst(v.x,v.y-50,"#e8402f",10);txt(v.x,v.y-130,e.kind==="poop"?"CACA ! -1":"-1","#ff5a3a")}
+    case "hit":{const v=posOf(e.id);if(v){burst(v.x,v.y-50,"#e8402f",10);txt(v.x,v.y-130,e.kind==="poop"?"CACA ! -1":e.kind==="mon"?"CROC ! -1":"-1","#ff5a3a")}
       if(e.id===me){P.kbx+=e.kx||0;P.kby+=e.ky||0;cam.shake=14;SFX.hit();P.flash=.25}else atPos(v,SFX.hit);
       if(e.by===me&&e.id!==me){MP.hitMark=.3;SFX.tic()}break}
     case "kill":{const v=posOf(e.id);if(v){MP.parts.push({x:v.x,y:v.y-60,vx:0,vy:-60,r:0,skull:1,t:0,life:1.2});puff(v.x,v.y-30,"#e9e2d5",14)}
+      if(e.kind==="mon"){feed(`${esc(nameOf(e.id))} <span class="k">s'est fait croquer</span>`);if(e.id===me){MP.killedBy=0;SFX.down();cam.shake=16}break}
       const how=e.kind==="poop"?"a piégé":(e.kind==="ram"||e.kind==="melee")?supOf(chOf(e.by)).verb:"a eu";
       if((e.kind==="ram"||e.kind==="melee")&&v){const pl=PWR[supOf(chOf(e.by)).pwr]||{};txt(v.x,v.y-110,(pl.hit||"BAM ! +").replace(/\s*\+$/,""),"#ff9a4d");burst(v.x,v.y-40,"#ffe066",14,300);if(e.kind==="ram")atPos(v,SFX.squash);else atPos(v,SFX.bonk)}
       if(e.by&&e.by!==e.id)feed(`<b>${esc(nameOf(e.by))}</b> <span class="k">${how}</span> ${esc(nameOf(e.id))}`);else feed(`${esc(nameOf(e.id))} <span class="k">est K.O.</span>`);
@@ -1278,9 +1315,21 @@ function mpEvent(e){const me=MP.id,P=MP.me;
     case "superend":if(e.id===me){const pl=PWR[supOf(chKey).pwr]||{};txt(P.x,P.y-130,pl.end||"Fin du pouvoir","#fff6e0")}break;
     case "quoi":mpQuoi(posOf(e.id));break;
     case "reflect":{txt(e.x,e.y-130,"RENVOYÉ !","#ffe066");atPos(e,SFX.tic);break}
-    case "rcount":MP.endWhy="";MP.bolts=[];feed(`Manche <b>${e.n}</b> : prêts ?`);break;
+    case "rcount":MP.endWhy="";MP.bolts=[];feed(MP.coop?"Nouvelle partie : les monstres arrivent !":`Manche <b>${e.n}</b> : prêts ?`);break;
+    // coopération : monstres et vagues
+    case "mhit":{burst(e.x,e.y-45,"#b5f25b",6,150);if(e.by===me){MP.hitMark=.3;SFX.tic()}else atPos(e,SFX.thunk);break}
+    case "mkill":{const boss=e.ty==="a";MP.parts.push({x:e.x,y:e.y-70,vx:0,vy:-60,r:0,skull:1,t:0,life:1.2});puff(e.x,e.y-30,"#e9e2d5",boss?26:12);
+      if(e.kind==="ram"||e.kind==="melee"){const pl=PWR[supOf(chOf(e.by)).pwr]||{};txt(e.x,e.y-110,(pl.hit||"BAM ! +").replace(/\s*\+$/,""),"#ff9a4d");burst(e.x,e.y-40,"#ffe066",14,300);atPos(e,e.kind==="ram"?SFX.squash:SFX.bonk)}
+      else if(e.kind==="poop")txt(e.x,e.y-110,"PIÉGÉ !","#ffb36b");
+      if(boss){cam.shake=14;feed(`<b>${esc(nameOf(e.by))}</b> <span class="k">terrasse</span> le croqueur de pomme !`);[523,659,784].forEach((f,i)=>tone(f,f,.18,"triangle",.11,i*.12))}
+      if(e.by===me){SFX.ko();txt(e.x,e.y-150,boss?"BOSS K.O. !":"K.O. !","#ffcf3a");if(e.streak>=5&&e.streak%5===0)toast("Série de "+e.streak+" monstres !")}else atPos(e,SFX.ko);break}
+    case "mstun":{const o=MP.mons.get(e.id);if(o)o.pop=.3;break}
+    case "laugh":{const o=MP.mons.get(e.id);if(o){txt(o.x,o.y-130,"HA HA HA !","#ff5a3a");atPos(o,SFX.laugh)}break}
+    case "boss":toast("Le croqueur de pomme débarque… visez-le tous ensemble !");SFX.laugh();break;
+    case "wave":MP.wave=e.n;SFX.horn();mpRoundFlash(String(e.n),"Vague · "+(e.boss?"avec le croqueur de pomme !":e.tot+" monstres"));feed(`Vague <b>${e.n}</b> : ${e.tot} monstres${e.boss?" dont le croqueur de pomme":""}`);break;
+    case "wclear":[523,659,784,1047].forEach((f,i)=>tone(f,f*1.01,.18,"triangle",.12,i*.12));mpRoundFlash("BRAVO","Vague "+e.n+" nettoyée");feed("Vague nettoyée : les K.O. reviennent !");break;
     case "rgo":tone(400,900,.18,"square",.12);tone(900,1500,.3,"square",.12,.15);mpRoundFlash("GO !","Manche "+e.n);break;
-    case "rend":{MP.endWhy=e.why;MP.winner=e.win;const iw=e.win===me;
+    case "rend":{MP.endWhy=e.why;MP.winner=e.win;if(e.wave!==undefined&&MP.coop)MP.wave=e.wave;if(MP.coop){SFX.over();cam.shake=6;break}const iw=e.win===me;
       if(iw){[523,659,784,1047].forEach((f,i)=>tone(f,f*1.01,.22,"triangle",.13,i*.14))}else{tone(700,350,.5,"square",.1)}
       cam.shake=iw?12:4;break}
     case "leave":feed(`${esc(e.name)} est parti`);MP.others.delete(e.id);break;
@@ -1304,6 +1353,7 @@ cvs.addEventListener("contextmenu",e=>{if(MP)e.preventDefault()});
   const up=e=>{if(MP)MP.tirHeld=false};b.addEventListener("pointerup",up);b.addEventListener("pointercancel",up)})();
 
 function autoAim(){const P=MP.me;let best=null,bd=780;
+  if(MP.coop){for(const o of MP.mons.values()){if(o.f&16)continue;const d=Math.hypot(o.x-P.x,o.y-P.y);if(d<bd){bd=d;best=o}}return best?Math.atan2(best.y-P.y,best.x-P.x):P.a}
   for(const [id,o] of MP.others){if(!(o.f&1)||o.f&4)continue;const d=Math.hypot(o.x-P.x,o.y-P.y);if(d<bd){bd=d;best=o}}
   return best?Math.atan2(best.y-P.y,best.x-P.x):P.a}
 
@@ -1339,7 +1389,8 @@ function mpUpdate(dt){const P=MP.me,Rl=MP.rules;MP.t+=dt;const now=performance.n
   // mes carreaux (affichés tout de suite, le serveur confirme les touches)
   for(let i=MP.bolts.length-1;i>=0;i--){const b=MP.bolts[i];const x0=b.x,y0=b.y;b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;let dead=b.life<=0||b.x<30||b.x>W-30||b.y<40||b.y>H-30;
     if(!dead)for(const o of OBS){if(o.kind!=="tree")continue;if(Math.hypot(b.x-o.x,b.y-o.y)<o.r+4){dead=true;burst(b.x,b.y-58,"#b9a58c",5,90);break}}
-    if(!dead)for(const o of MP.others.values()){if(!(o.f&1))continue;if(Math.hypot(b.x-o.x,b.y-o.y)<28){dead=true;break}}
+    if(!dead&&MP.coop){for(const o of MP.mons.values()){if(o.f&16)continue;if(Math.hypot(b.x-o.x,b.y-o.y)<34){dead=true;break}}}
+    else if(!dead)for(const o of MP.others.values()){if(!(o.f&1))continue;if(Math.hypot(b.x-o.x,b.y-o.y)<28){dead=true;break}}
     if(dead)MP.bolts.splice(i,1)}
   mpInterp(dt);
   for(const it of MP.items.values())it.born+=dt;if(MP.coffee)MP.coffee.ph+=dt;for(const w of MP.powers.values()){w.born+=dt;w.ph+=dt}
@@ -1354,7 +1405,7 @@ function mpUpdate(dt){const P=MP.me,Rl=MP.rules;MP.t+=dt;const now=performance.n
   // la caméra peut dépasser un peu les remparts pour que le HUD ne cache jamais ton perso
   const mx=70/zoom,mt=140/zoom,mb=90/zoom;cam.x=W+mx*2>hw*2?clamp(cam.x,hw-mx,W-hw+mx):W/2;cam.y=H+mt+mb>hh*2?clamp(cam.y,hh-mt,H-hh+mb):H/2;cam.shake=Math.max(0,cam.shake-dt*30);
   // écran K.O.
-  const dd=$("mpDead");if(!P.alive&&!MP.podSig){dd.hidden=false;const by=MP.killedBy&&MP.killedBy!==MP.id?"par "+nameOf(MP.killedBy)+" · ":"";const s="K.O. !|"+by+"retour dans "+Math.max(1,Math.ceil(P.deadT))+" s";
+  const dd=$("mpDead");if(!P.alive&&!MP.podSig){dd.hidden=false;const by=MP.killedBy&&MP.killedBy!==MP.id?"par "+nameOf(MP.killedBy)+" · ":MP.coop&&MP.roster.size>1?"tiens bon, l'équipe te couvre · ":"";const s="K.O. !|"+by+"retour dans "+Math.max(1,Math.ceil(P.deadT))+" s";
     if(dd.dataset.s!==s){dd.dataset.s=s;dd.innerHTML=`K.O. !<small>${esc(by)}retour dans ${Math.max(1,Math.ceil(P.deadT))} s</small>`}}else if(!dd.hidden){dd.hidden=true;dd.dataset.s=""}
   mpHud()}
 function mpFire(){const P=MP.me,a=P.a,face=Math.cos(a)>=0?1:-1,spd=MP.rules.boltSpeed||950,pw=P.pwT>0?mpw(P.pw):null;
@@ -1372,7 +1423,15 @@ function mpInterp(dt){const sn=MP.snaps;if(!sn.length)return;const rt=performanc
     const jump=Math.hypot(pb[1]-pa[1],pb[2]-pa[2])>260,kk=jump?1:k;o.x=pa[1]+(pb[1]-pa[1])*kk;o.y=pa[2]+(pb[2]-pa[2])*kk;o.vx=pb[3];o.vy=pb[4];
     let da=pb[5]-pa[5];da=Math.atan2(Math.sin(da),Math.cos(da));o.a=pa[5]+da*Math.min(1,kk);o.f=pb[6];o.hp=pb[7];o.act=pb[10];o.pw=pb[12]||"";o.sp=pb[15]||0;
     o.anim+=dt*(Math.hypot(o.vx,o.vy)/26)}
-  for(const id of [...MP.others.keys()])if(!seen.has(id))MP.others.delete(id)}
+  for(const id of [...MP.others.keys()])if(!seen.has(id))MP.others.delete(id);
+  // monstres (coopération), interpolés de la même façon
+  if(!b.mm){if(MP.mons.size)MP.mons.clear();return}
+  const seenM=new Set(),now=performance.now();
+  for(const [id,mb] of b.mm){seenM.add(id);const ma=(a.mm&&a.mm.get(id))||mb;let o=MP.mons.get(id);
+    if(!o){o={id,type:mb[1],anim:R()*3,x:mb[2],y:mb[3],pop:0};MP.mons.set(id,o)}
+    const ox=o.x,oy=o.y;o.x=ma[2]+(mb[2]-ma[2])*k;o.y=ma[3]+(mb[3]-ma[3])*k;o.f=mb[4];o.hp=mb[5];o.max=mb[6];
+    o.mv=Math.hypot(o.x-ox,o.y-oy)>dt*15;o.anim+=dt;o.pop=Math.max(0,o.pop-dt);if(o.f&16&&!o.deadAt)o.deadAt=now}
+  for(const id of [...MP.mons.keys()])if(!seenM.has(id))MP.mons.delete(id)}
 
 /* ---------- HUD ---------- */
 function mpHud(){if(!MP)return;const P=MP.me,r=MP.roster.get(MP.id)||{kills:0,deaths:0};
@@ -1396,34 +1455,43 @@ function mpRoundFlash(big,small){const el=$("mpRound");el.innerHTML=(small?`<sma
 function mpRoundUI(now){const left=mpPhaseLeft(now),ph=MP.phase,tm=$("mpTimer");
   // chrono en haut
   let cls="",html="";
-  if(ph==="wait"){cls="wait";html="En attente d'un adversaire…<small>Partage le code "+esc(MP.room)+" !</small>"}
+  const first=((MP.rules.coop||{}).firstWave)||1,nm=MP.left;
+  if(MP.coop){
+    if(ph==="wait")html="Préparation…";
+    else if(ph==="count")html=`Vague ${first}<small>préparez-vous</small>`;
+    else if(ph==="play"){html=`Vague ${MP.wave}<small>${nm} monstre${nm>1?"s":""} restant${nm>1?"s":""}</small>`;if(nm&&nm<=3)cls="hurry"}
+    else if(ph==="break")html=`Vague ${MP.wave} réussie !<small>vague suivante dans ${Math.max(1,Math.ceil(left))} s</small>`;
+    else html="L'équipe est K.O.";}
+  else if(ph==="wait"){cls="wait";html="En attente d'un adversaire…<small>Partage le code "+esc(MP.room)+" !</small>"}
   else if(ph==="play"){const s=Math.ceil(left),win=(MP.rules.round||{}).win||15;html=Math.floor(s/60)+":"+String(s%60).padStart(2,"0")+`<small>Manche ${MP.round} · ${win} K.O. pour gagner</small>`;if(s<=10)cls="hurry"}
   else if(ph==="count")html=`Manche ${MP.round}<small>prépare-toi</small>`;
   else html=`Fin de la manche ${MP.round}`;
   const ts=cls+html;if(ts!==MP.timerSig){MP.timerSig=ts;tm.className=cls;tm.innerHTML=html}
-  if(ph==="play"&&left<=5.05&&left>0){const s=Math.ceil(left);if(MP.tick!==s){MP.tick=s;tone(880,880,.08,"square",.08)}}
+  if(!MP.coop&&ph==="play"&&left<=5.05&&left>0){const s=Math.ceil(left);if(MP.tick!==s){MP.tick=s;tone(880,880,.08,"square",.08)}}
   // compte à rebours au centre
   const el=$("mpRound");
-  if(ph==="count"){const n=Math.max(1,Math.ceil(left)),sg="c"+n;if(MP.roundSig!==sg){MP.roundSig=sg;el.innerHTML=`<small>Manche ${MP.round}</small>${n}`;el.hidden=false;el.classList.remove("pop");void el.offsetWidth;el.classList.add("pop");tone(520,520,.1,"square",.1)}}
+  if(ph==="count"){const n=Math.max(1,Math.ceil(left)),sg="c"+n;if(MP.roundSig!==sg){MP.roundSig=sg;el.innerHTML=`<small>${MP.coop?"Vague "+first:"Manche "+MP.round}</small>${n}`;el.hidden=false;el.classList.remove("pop");void el.offsetWidth;el.classList.add("pop");tone(520,520,.1,"square",.1)}}
   else if(MP.roundSig&&MP.roundSig[0]==="c"){MP.roundSig="";el.hidden=true}
   // compte à rebours du podium
-  if(MP.podSig){const nx=$("mpNext");if(nx){const s=Math.max(1,Math.ceil(left));const t=ph==="end"?(MP.roster.size>=2?`Prochaine manche dans ${s} s`:"En attente d'autres joueurs…"):"";if(nx.textContent!==t)nx.textContent=t}}}
+  if(MP.podSig){const nx=$("mpNext");if(nx){const s=Math.max(1,Math.ceil(left));const t=ph==="end"?(MP.coop?`Nouvelle partie dans ${s} s`:MP.roster.size>=2?`Prochaine manche dans ${s} s`:"En attente d'autres joueurs…"):"";if(nx.textContent!==t)nx.textContent=t}}}
 function showPodium(pod){const sig=JSON.stringify(pod);if(sig===MP.podSig)return;const first=!MP.podSig;MP.podSig=sig;$("mpDead").hidden=true;$("mpRound").hidden=true;
   const me=MP.id,why=MP.endWhy,img=ch=>{const k=(MPS[ch]||MPS.sucre).idle,i=IMG[k];return i&&i.src?i.src:""};
+  const co=MP.coop,unit=k=>co?k+" monstre"+(k>1?"s":""):k+" K.O.";
   const step=(r,n)=>{if(!r)return`<div class="st p${n}"></div>`;const [id,name,ch,k]=r;const s=img(ch);
-    return`<div class="st p${n}${id===me?" me":""}">${n===1?"<span>👑</span>":""}${s?`<img src="${s}" alt="">`:""}<b>${esc(name)}</b><span>${k} K.O.</span><i>${n}</i></div>`};
-  const top=pod[0],whyTxt=why==="win"&&top?`${esc(top[1])} atteint ${top[3]} K.O. !`:why==="time"?"Temps écoulé !":why==="alone"?"Tout le monde est parti…":"";
-  const mi=pod.findIndex(r=>r[0]===me);const mine=mi<0?"":mi===0?"🏆 Tu gagnes la manche !":`Tu finis ${mi+1}e sur ${pod.length}`;
-  const rest=pod.slice(3,8).map((r,i)=>`<li class="${r[0]===me?"me":""}"><span>${i+4}. ${esc(r[1])}</span><span>${r[3]} K.O. · ${r[4]} M</span></li>`).join("");
-  $("mpPodium").innerHTML=`<div class="pcard"><h2>Manche ${MP.round} terminée</h2><p class="why">${whyTxt}</p>
+    return`<div class="st p${n}${id===me?" me":""}">${n===1?"<span>👑</span>":""}${s?`<img src="${s}" alt="">`:""}<b>${esc(name)}</b><span>${unit(k)}</span><i>${n}</i></div>`};
+  const top=pod[0],whyTxt=co?`L'équipe tombe à la vague ${MP.wave}`:why==="win"&&top?`${esc(top[1])} atteint ${top[3]} K.O. !`:why==="time"?"Temps écoulé !":why==="alone"?"Tout le monde est parti…":"";
+  const mi=pod.findIndex(r=>r[0]===me),mk=mi<0?0:pod[mi][3];
+  const mine=mi<0?"":co?(pod.length===1?`Tu as tenu jusqu'à la vague ${MP.wave} avec ${unit(mk)}`:mi===0?"🏆 Meilleur chasseur de l'équipe !":`Tu finis ${mi+1}e chasseur sur ${pod.length}`):mi===0?"🏆 Tu gagnes la manche !":`Tu finis ${mi+1}e sur ${pod.length}`;
+  const rest=pod.slice(3,8).map((r,i)=>`<li class="${r[0]===me?"me":""}"><span>${i+4}. ${esc(r[1])}</span><span>${unit(r[3])} · ${r[4]} M</span></li>`).join("");
+  $("mpPodium").innerHTML=`<div class="pcard"><h2>${co?"Partie terminée":`Manche ${MP.round} terminée`}</h2><p class="why">${whyTxt}</p>
     <div class="steps">${step(pod[1],2)}${step(pod[0],1)}${step(pod[2],3)}</div>${rest?`<ol class="rest">${rest}</ol>`:""}
     <p class="mine">${mine}</p><p class="next" id="mpNext"></p></div>`;
   $("mpPodium").hidden=false;if(first&&mi===0)cam.shake=12}
 function mpRanking(){return[...MP.roster.entries()].sort((a,b)=>b[1].kills-a[1].kills||a[1].deaths-b[1].deaths)}
 function renderMpBoard(){if(!MP)return;const rows=mpRanking();MP.leader=rows.length>1&&rows[0][1].kills>0&&(rows.length<2||rows[0][1].kills>rows[1][1].kills)?rows[0][0]:0;
   const narrow=vw<620;let shown=rows;if(narrow&&rows.length>5){const mi=rows.findIndex(r=>r[0]===MP.id);shown=rows.slice(0,4);if(mi>=4)shown.push(rows[mi]);else shown=rows.slice(0,5)}
-  const sig=JSON.stringify(shown)+MP.ping;if(sig===MP.boardSig)return;MP.boardSig=sig;
-  const b=$("mpBoard");b.innerHTML=`<div class="hd"><span>Salle ${esc(MP.room)} · ${rows.length}/${MP.max}</span><span>K / M</span></div>`+
+  const sig=JSON.stringify(shown)+MP.ping+MP.wave;if(sig===MP.boardSig)return;MP.boardSig=sig;
+  const b=$("mpBoard");b.innerHTML=`<div class="hd"><span>Salle ${esc(MP.room)} · ${MP.coop?"🤝 vague "+MP.wave:rows.length+"/"+MP.max}</span><span>${MP.coop?"Mon. / M":"K / M"}</span></div>`+
     shown.map(([id,r])=>{const o=id===MP.id?MP.me:MP.others.get(id);const dead=o&&(id===MP.id?!o.alive:!(o.f&1));
       return`<div class="r${id===MP.id?" me":""}${dead?" dead":""}"><span>${id===MP.leader?"👑 ":""}${esc(r.name)}</span><i>${r.kills}</i><em>${r.deaths}</em></div>`}).join("")}
 
@@ -1468,6 +1536,25 @@ function drawFighter(o,isMe,tt){if(drawSuper(o,isMe,tt))return;const f=isMe?((o.
   if(d){if(pw==="armor"){ctx.globalAlpha=.32+Math.sin(tt*7)*.1;ctx.strokeStyle=d.col;ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(o.x,o.y-55,50,70,0,0,7);ctx.stroke();ctx.fillStyle="rgba(255,224,102,.16)";ctx.fill()}
     else{ctx.globalAlpha=.8;for(let i=0;i<5;i++){const a=tt*5+i*1.26,r=34+Math.sin(tt*9+i)*4;ctx.fillStyle=d.col;ctx.beginPath();ctx.arc(o.x+Math.cos(a)*r,o.y-50+Math.sin(a)*r*.45,3.5,0,7);ctx.fill()}}
     ctx.globalAlpha=1}}
+// monstres de la coopération : mêmes images que le mode solo
+function mpMonImg(o){const T=o.type,f=o.f;
+  if(f&16)return IMG[{p:"p_joke",g:"g_fear",o:"o_tired",r:"r_sulk",a:"a_bite2"}[T]];
+  if(f&1)return IMG[{p:"p_joke",g:"g_fear",o:"o_tired",r:"r_sulk",a:"a_guard"}[T]];
+  if(T==="a"){if(f&8)return IMG.a_laugh;if(f&128)return IMG["a_walk"+(1+Math.floor(o.anim*4)%3)];return IMG[f&4?"a_charge":(Math.floor(o.anim*7)%2?"a_run2":"a_run1")]}
+  if(T==="p")return IMG[f&4?"p_jump":"p_run"];if(T==="g")return IMG.g_run;if(T==="o")return IMG[f&2?"o_tired":"o_run"];return IMG[f&4?"r_attack":"r_run"]}
+function drawMon(o,tt){const T=MT[o.type]||MT.p,f=o.f,img=mpMonImg(o);if(!img||!img.width)return;
+  let a=1,rot=0,sq=1,hop=0;const hh=T.h;
+  if(f&16){const d=(performance.now()-(o.deadAt||0))/1000;a=Math.max(0,1-d/.9);rot=d*8;sq=1+d*.3}
+  else if(!(f&1)){if(o.type==="p")hop=f&4?30:Math.abs(Math.sin(o.anim*6.3))*14;if(o.mv)rot=Math.sin(o.anim*9)*.09}
+  if(o.pop)sq=1+o.pop;
+  if(!(f&16))shadow(o.x,o.y,o.type==="a"?30:24);
+  ctx.save();if(f&1)ctx.filter="hue-rotate(40deg) saturate(.8)";else if(f&64)ctx.filter="brightness(1.9) saturate(.5)";spr(img,o.x,o.y-hop,hh,!!(f&32),rot,a,sq);ctx.restore();
+  if(f&16)return;
+  if(f&1)stars(o.x,o.y-hh-8-hop,tt);
+  if(o.type==="o"&&f&2&&!(f&1)){ctx.fillStyle="#fff";ctx.font="bold 18px Nunito,sans-serif";ctx.textAlign="center";ctx.fillText("z",o.x+20,o.y-hh-4-Math.sin(tt*3)*5)}
+  // barre de vie quand il est touché (toujours pour le boss)
+  if(o.hp<o.max||o.type==="a"){const w=o.type==="a"?72:40,y=o.y-hh-16-hop;ctx.fillStyle=OUT;ctx.fillRect(o.x-w/2-2,y-2,w+4,9);ctx.fillStyle="#3b2a1d";ctx.fillRect(o.x-w/2,y,w,5);
+    ctx.fillStyle=o.type==="a"?"#ff5a3a":"#b5f25b";ctx.fillRect(o.x-w/2,y,w*Math.max(0,o.hp)/(o.max||1),5)}}
 function mpDraw(tt,x0,y0,ww,hh){const now=performance.now(),P=MP.me;
   // cacas au sol
   for(const p of MP.poops.values()){const t=p.t+(now-p.at)/1000,life=MP.rules.poopLife||20;const a=t>life-2?(Math.sin(t*20)>0?.4:1):1;
@@ -1485,7 +1572,7 @@ function mpDraw(tt,x0,y0,ww,hh){const now=performance.now(),P=MP.me;
     for(let i=0;i<4;i++){const a=w.ph*2+i*1.57,sx=w.x+Math.cos(a)*44,sy=cy+Math.sin(a)*26,r=3+Math.sin(w.ph*8+i)*1.5;ctx.fillStyle="#fff6c0";ctx.beginPath();ctx.moveTo(sx,sy-r*2);ctx.lineTo(sx+r*.6,sy);ctx.lineTo(sx,sy+r*2);ctx.lineTo(sx-r*.6,sy);ctx.closePath();ctx.fill()}
     ctx.globalAlpha=1}
   // décor, joueurs et carreaux triés par profondeur
-  const L=[];DECOR.forEach(d=>L.push({y:d.y,d}));L.push({y:P.y,me:1});for(const o of MP.others.values())L.push({y:o.y,o});
+  const L=[];DECOR.forEach(d=>L.push({y:d.y,d}));L.push({y:P.y,me:1});for(const o of MP.others.values())L.push({y:o.y,o});for(const m of MP.mons.values())L.push({y:m.y,m});
   for(const b of MP.sbolts){const e=(now-b.at)/1000;L.push({y:b.y+b.vy*e,b:[b.x+b.vx*e,b.y+b.vy*e,b.vx,b.vy]})}
   for(const b of MP.bolts)L.push({y:b.y,b:[b.x,b.y,b.vx,b.vy]});
   L.sort((a,b)=>a.y-b.y);
@@ -1497,6 +1584,7 @@ function mpDraw(tt,x0,y0,ww,hh){const now=performance.now(),P=MP.me;
       ctx.imageSmoothingEnabled=true}
     else if(o.me)drawFighter(P,true,tt);
     else if(o.o){const q=o.o;if(q.x<x0-120||q.x>x0+ww+120||q.y<y0-40||q.y>y0+hh+200)continue;drawFighter(q,false,tt)}
+    else if(o.m){const q=o.m;if(q.x<x0-120||q.x>x0+ww+120||q.y<y0-40||q.y>y0+hh+200)continue;drawMon(q,tt)}
     else if(o.b)drawBolt(...o.b)}
   // nuages de prout
   for(const c of MP.clouds.values()){const ct=c.t0+(now-c.at)/1000,R0=Math.min(1,ct/.35)*(MP.rules.cloudR||190),fade=ct>c.life-.8?Math.max(0,(c.life-ct)/.8):1;ctx.globalAlpha=.78*fade;
@@ -1520,7 +1608,10 @@ function mpDraw(tt,x0,y0,ww,hh){const now=performance.now(),P=MP.me;
   ctx.setTransform(dpr,0,0,dpr,0,0);const t=tt;
   const edge=(obj,dy)=>{const sx=(obj.x-cam.x)*zoom+vw/2,sy=(obj.y-dy-cam.y)*zoom+vh/2;if(sx>=0&&sx<=vw&&sy>=0&&sy<=vh)return null;const cx=vw/2,cy=vh/2,a=Math.atan2(sy-cy,sx-cx);
     return{a,x:clamp(cx+Math.cos(a)*vw,40,vw-40),y:clamp(cy+Math.sin(a)*vh,110,vh-150)}};
-  for(const o of MP.others.values()){if(!(o.f&1))continue;if(Math.hypot(o.x-P.x,o.y-P.y)>1400)continue;const e=edge(o,50);if(!e)continue;
+  const arrow=(o,col,dy,max)=>{if(Math.hypot(o.x-P.x,o.y-P.y)>max)return;const e=edge(o,dy);if(!e)return;
+    ctx.save();ctx.translate(e.x,e.y);ctx.rotate(e.a);ctx.globalAlpha=.85;ctx.fillStyle=col;ctx.strokeStyle=OUT;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(14,0);ctx.lineTo(-6,-9);ctx.lineTo(-6,9);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore()};
+  if(MP.coop){for(const m of MP.mons.values())if(!(m.f&16))arrow(m,m.type==="a"?"#ff2a6a":"#ff5a3a",45,m.type==="a"?2600:900);for(const o of MP.others.values())if(o.f&1)arrow(o,"#7fd4ff",50,2600)}
+  else for(const o of MP.others.values()){if(!(o.f&1))continue;if(Math.hypot(o.x-P.x,o.y-P.y)>1400)continue;const e=edge(o,50);if(!e)continue;
     ctx.save();ctx.translate(e.x,e.y);ctx.rotate(e.a);ctx.globalAlpha=.85;ctx.fillStyle="#ff5a3a";ctx.strokeStyle=OUT;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(14,0);ctx.lineTo(-6,-9);ctx.lineTo(-6,9);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore()}
   for(const w of MP.powers.values()){const d=mpw(w.k);if(!d)continue;const e=edge(w,48);if(!e)continue;ctx.save();ctx.translate(e.x,e.y);ctx.globalAlpha=.7+Math.sin(t*6)*.25;ctx.beginPath();ctx.arc(0,0,22,0,7);ctx.fillStyle="#fff2b0";ctx.fill();ctx.lineWidth=3;ctx.strokeStyle=d.col;ctx.stroke();
     ctx.drawImage(ITEM[d.item]||ITEM.donut,-17,-17,34,34);ctx.rotate(e.a);ctx.beginPath();ctx.moveTo(32,0);ctx.lineTo(23,-8);ctx.lineTo(23,8);ctx.closePath();ctx.fillStyle=d.col;ctx.fill();ctx.strokeStyle=OUT;ctx.lineWidth=2;ctx.stroke();ctx.restore()}
@@ -1539,7 +1630,7 @@ function mpDraw(tt,x0,y0,ww,hh){const now=performance.now(),P=MP.me;
 
 $("openMP").onclick=openMP;$("mpJoin").onclick=mpJoin;$("mpBack").onclick=()=>{$("mpS").hidden=true;$("startS").hidden=false;clearInterval(roomsTimer);$("openMP").focus()};
 $("mpRoom").addEventListener("keydown",e=>{e.stopPropagation();if(e.key==="Enter")mpJoin()});
-$("mpRoom").addEventListener("input",e=>{const v=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,"");if(v!==e.target.value)e.target.value=v});
+$("mpRoom").addEventListener("input",e=>{e.target.dataset.touched="1";const v=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,"");if(v!==e.target.value)e.target.value=v});
 $("quitMP").onclick=mpQuit;
 })();
 </script>

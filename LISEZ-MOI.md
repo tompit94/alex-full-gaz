@@ -8,7 +8,7 @@ Le dossier contient tout le site :
 | `config.js` | L'adresse et la clé de ta base Supabase (à remplir) |
 | `supabase.sql` | Le script qui crée la table des scores et le classement |
 | `icon.png` | L'icône du site (onglet, écran d'accueil du téléphone) |
-| `mp/img/` | Les poses à l'arbalète du mode Bataille |
+| `mp/img/` | Les poses à l'arbalète du mode multijoueur |
 | `server/` | Le serveur du mode multijoueur (à héberger à part, voir plus bas) |
 | `render.yaml` | La configuration toute prête pour héberger ce serveur sur Render |
 
@@ -88,7 +88,16 @@ Ouvre l'adresse dans Chrome, puis **⋮ → Ajouter à l'écran d'accueil**. Le 
 
 ---
 
-## Mode multijoueur « Bataille »
+## Mode multijoueur
+
+Bouton **Multijoueur** du menu, puis choix du mode :
+
+- **⚔️ Chacun pour soi** : bataille à l'arbalète, tous contre tous, sans monstres (détails juste en dessous).
+- **🤝 Coopération** : tous ensemble contre des vagues de monstres (voir « Mode Coopération » plus bas).
+
+Une salle garde le mode choisi par celui qui l'a créée : si tu rejoins une salle existante, tu joues dans son mode (la liste des salles l'affiche).
+
+### Chacun pour soi
 
 Jusqu'à **10 joueurs** dans la même salle, sur la même carte, sans monstres. Chacun se bat à l'arbalète.
 
@@ -106,7 +115,19 @@ Jusqu'à **10 joueurs** dans la même salle, sur la même carte, sans monstres. 
 - Les friandises redonnent un cœur et remplissent la jauge. Le **prout** étourdit les adversaires autour de toi.
 - Le **café** donne un coup de boost et un **caca piégé** : l'adversaire qui marche dedans perd un cœur.
 - Le tableau en haut à droite classe les joueurs par K.O. Le 1er porte la 👑.
-- On rejoint une salle avec un **code** (par défaut `GAZ`). Donne le même code à tes potes pour être ensemble. Une salle pleine refuse le 11e joueur.
+- On rejoint une salle avec un **code** (par défaut `GAZ`, ou `COOP` en coopération). Donne le même code à tes potes pour être ensemble. Une salle pleine refuse le 11e joueur.
+
+### Mode Coopération
+
+De 1 à **10 joueurs** ensemble contre les monstres du mode solo (et le croqueur de pomme).
+
+- **Vagues** : compte à rebours de 4 s, puis vague 1. Une vague est finie quand tous ses monstres sont éliminés : 6 s de pause, les joueurs K.O. reviennent, puis vague suivante, plus grosse et un peu plus rapide. Le nombre de monstres grandit avec le nombre de joueurs.
+- **Le croqueur de pomme** (boss avec une barre de vie) arrive toutes les 3 vagues.
+- **Pas de tir ami** : carreaux, prouts, cacas et pouvoirs ne touchent que les monstres. Un carreau enlève 1 point de vie (2 ou 3 selon le monstre), un caca élimine le monstre qui marche dedans, le prout les étourdit.
+- **Morsure** = -1 cœur. K.O., tu reviens 6 s plus tard.
+- **Défaite** : si toute l'équipe est K.O. en même temps. Podium des meilleurs chasseurs (monstres éliminés), puis nouvelle partie au bout de 10 s.
+- **Pouvoir du perso** : 5 monstres éliminés remplissent la jauge.
+- Réglages dans `server/server.js` (objets `COOP` et `MON`).
 
 **Commandes**
 
@@ -129,7 +150,7 @@ GitHub Pages et Netlify ne servent que des fichiers. Pour que 10 personnes jouen
    multiUrl: "wss://full-gaz-multi.onrender.com"
    ```
 
-6. Pousse la modification sur GitHub (et sur Netlify si tu l'utilises). Le bouton **Bataille multi** du menu marche alors.
+6. Pousse la modification sur GitHub (et sur Netlify si tu l'utilises). Le bouton **Multijoueur** du menu marche alors.
 
 **Bon à savoir sur l'offre gratuite de Render**
 
@@ -145,9 +166,11 @@ npm start                      # serveur sur le port 8080
 ROUND_TIME=30 npm start        # (test) manches de 30 s au lieu de 3 min
 TEST_SUPER=1 npm start         # (test) jauge de pouvoir toujours pleine
 node bots.js 4                 # (optionnel) 4 robots qui se battent dans la salle GAZ
+node bots.js 2 COOP ws://localhost:8080 coop   # (optionnel) 2 robots qui chassent les monstres dans la salle COOP
+COOP_WAVE=3 npm start          # (test) la coopération commence directement à la vague 3 (boss)
 ```
 
-Puis ouvre le jeu depuis `http://localhost` (par exemple `npx serve .` à la racine) : en local, le jeu se branche tout seul sur `ws://localhost:8080`. Tu peux aussi forcer un serveur avec l'adresse `index.html?server=wss://…`.
+Puis ouvre le jeu depuis `http://localhost` (par exemple `npx serve .` à la racine) avec l'adresse `index.html?server=ws://localhost:8080` (sinon le jeu se branche sur le serveur indiqué dans `config.js`).
 
 ### Si tu modifies la carte
 

@@ -43,11 +43,12 @@ function buildObstacles() {
 const OBS = buildObstacles();
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 
-// Pousse une entité hors des obstacles et la garde dans les remparts (identique au client)
+// Pousse une entité hors des obstacles et la garde dans les remparts (identique au client).
+// e.hitObs garde le dernier obstacle touché : les monstres s'en servent pour le contourner.
 function collide(e) {
   for (const o of OBS) {
     const dx = e.x - o.x, dy = e.y - o.y, d = Math.hypot(dx, dy), m = e.r + o.r;
-    if (d < m && d > 0) { const p = m - d; e.x += dx / d * p; e.y += dy / d * p; }
+    if (d < m && d > 0) { const p = m - d; e.x += dx / d * p; e.y += dy / d * p; e.hitObs = o; }
   }
   e.x = clamp(e.x, 46, W - 46); e.y = clamp(e.y, 56, H - 40);
 }

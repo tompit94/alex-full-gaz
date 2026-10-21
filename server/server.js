@@ -1,4 +1,5 @@
-// Full Gaz ! — serveur multijoueur (bataille à l'arbalète, en manches avec podium)
+// Full Gaz ! — serveur multijoueur : « Chacun pour soi » (bataille à l'arbalète, en manches avec podium)
+// ou « Coopération » (tous ensemble contre des vagues de monstres)
 // Lancer : npm install && npm start   (port : variable PORT, 8080 par défaut)
 "use strict";
 
@@ -39,6 +40,14 @@ const SUPER = { need: 3, time: 6, ramR: 64, meleeR: 60, quoiR: 230, quoiEvery: 1
 const TEST_SUPER = process.env.TEST_SUPER === "1"; // test : jauge pleine en permanence
 const SUPER_KIND = { sucre: "ram", italien: "ram", sale: "melee", arthur: "melee", gargar: "melee", mike: "melee", yonarie: "melee", mihide: "guard" };
 const superOf = p => (p.spT > 0 ? SUPER_KIND[p.ch] || "melee" : "");
+// Mode Coopération : tous ensemble contre des vagues de monstres
+//  - pas de tirs amis : carreaux, prouts, cacas et pouvoirs ne touchent que les monstres
+//  - une vague est finie quand tous ses monstres sont éliminés ; pause, les K.O. reviennent, vague suivante
+//  - si toute l'équipe est K.O. en même temps, la partie est perdue (podium des chasseurs)
+const COOP = { respawn: 6, need: 5, breakT: +process.env.COOP_BREAK || 6, spawnEvery: 0.7, inv: 1.2, stun: 3, hitR: 34, firstWave: +process.env.COOP_WAVE || 1 };
+// Monstres (mêmes que le mode solo) : vitesse et points de vie (1 carreau = 1 point)
+const MON = { p: { sp: 150, hp: 2 }, g: { sp: 138, hp: 2 }, o: { sp: 120, hp: 3 }, r: { sp: 112, hp: 3 }, a: { sp: 130, hp: 10 } };
+const MODES = ["versus", "coop"];
 // éclair et donut sont réservés aux super-pâtisseries pour qu'on les reconnaisse
 const TREATS = ["croissant", "painchoc", "bonbon", "baguette", "burger", "penne", "spaghetti", "lasagne"];
 
@@ -59,8 +68,11 @@ function cleanRoom(s) {
 
 /* ---------- salle ---------- */
 class Room {
-  constructor(code) {
+  constructor(code, mode) {
     this.code = code;
+    this.mode = MODES.includes(mode) ? mode : "versus";
+    this.coop = this.mode === "coop";
+    this.mons = []; this.queue = []; this.wave = 0; this.spawnT = 0; this.monSpeed = 1;
     this.players = new Map();
     this.bolts = []; this.items = []; this.poops = []; this.clouds = [];
     this.coffee = null; this.coffeeT = 5;
@@ -116,6 +128,7 @@ class Room {
   // remet tout le monde à zéro, chacun à un endroit différent, avant une nouvelle manche
   resetRound() {
     this.bolts = []; this.poops = []; this.clouds = []; this.powers = []; this.powT = 6;
+    this.mons = []; this.queue = []; this.wave = 0;
     this.items = []; for (let i = 0; i < R.items; i++) this.spawnItem();
     this.coffee = null; this.coffeeT = 8;
     const P = [...this.players.values()];
@@ -134,9 +147,174 @@ class Room {
     this.podium = rk.map(p => [p.id, p.name, p.ch, p.kills, p.deaths]);
     this.bolts = [];
     this.setPhase("end", ROUND.end);
-    this.ev({ k: "rend", why, win: rk[0] ? rk[0].id : 0 });
+    this.ev({ k: "rend", why, win: rk[0] ? rk[0].id : 0, wave: this.wave });
+  }
+  supNeed() { return this.coop ? COOP.need : SUPER.need; }
+  respawn(p) {
+    const s = this.freeSpot(this.coop ? 0 : 500, 140);
+    p.spawnN++; p.lastMove = Date.now(); p.pw = ""; p.pwT = 0; p.spT = 0;
+    Object.assign(p, { x: s.x, y: s.y, vx: 0, vy: 0, hp: R.hp, alive: true, deadT: 0, shield: R.spawnShield, stun: 0, act: "", kbBudget: 0, inv: 0 });
+    this.ev({ k: "spawn", id: p.id, x: r1(p.x), y: r1(p.y), sn: p.spawnN });
+  }
+
+  /* ---------- coopération : vagues de monstres ---------- */
+  startRun() {
+    this.resetRound(); this.round++;
+    this.setPhase("count", ROUND.count); this.ev({ k: "rcount", n: this.round });
+  }
+  startWave(n) {
+    this.wave = n;
+    const np = Math.max(1, this.players.size);
+    const total = Math.min(70, Math.round((3 + n * 2.5) * (1 + 0.45 * (np - 1))));
+    const q = []; for (let i = 0; i < total; i++) q.push("pgor"[(i + n) % 4]);
+    // le croqueur de pomme (boss) arrive toutes les 3 vagues
+    const boss = n % 3 === 0 ? Math.min(3, n / 3) : 0;
+    for (let k = 1; k <= boss; k++) q.splice(Math.floor(q.length * k / (boss + 1)), 0, "a");
+    this.queue = q; this.spawnT = 1;
+    this.monSpeed = Math.min(1.4, 1 + 0.035 * (n - 1));
+    this.setPhase("play", 0);
+    this.ev({ k: "wave", n, tot: q.length, boss });
+  }
+  monsLeft() { return this.queue.length + this.mons.filter(m => m.st !== "dead").length; }
+  spawnMon(type) {
+    const s = this.freeSpot(600);
+    const np = Math.max(1, this.players.size), T = MON[type];
+    const hp = type === "a" ? T.hp + 4 * (np - 1) : T.hp + (this.wave >= 8 ? 1 : 0);
+    this.mons.push({ id: this.nextObj++, type, x: s.x, y: s.y, vx: 0, vy: 0, r: 24, hp, max: hp, st: "chase", t: 0,
+      ph: rnd() * 6, cyc: rnd() * 3, mode: "", face: 1, kbx: 0, kby: 0, hitT: 0, jump: 0, burst: false, meleeT: 0, wt: null });
+    if (type === "a") this.ev({ k: "boss" });
+  }
+  hurtMon(m, by, dmg, kind, kx, ky) {
+    if (m.st === "dead") return;
+    m.hp -= dmg; m.hitT = 0.2; m.kbx += kx; m.kby += ky;
+    if (m.hp <= 0) {
+      m.hp = 0; m.st = "dead"; m.t = 0; m.vx = m.vy = 0;
+      if (by) {
+        by.kills++; by.streak++;
+        if (!(by.spT > 0) && by.pk < this.supNeed()) { by.pk++; if (by.pk === this.supNeed()) this.ev({ k: "superok", id: by.id }); }
+      }
+      this.ev({ k: "mkill", id: m.id, by: by ? by.id : 0, kind, ty: m.type, x: r1(m.x), y: r1(m.y), streak: by ? by.streak : 0 });
+    } else this.ev({ k: "mhit", id: m.id, by: by ? by.id : 0, x: r1(m.x), y: r1(m.y) });
+  }
+  stunMon(m, kx, ky, t = COOP.stun) {
+    if (m.st === "dead") return;
+    m.st = "stun"; m.t = COOP.stun - t; m.kbx = kx; m.kby = ky; m.jump = 0; m.burst = false;
+    this.ev({ k: "mstun", id: m.id });
+  }
+  updateMons(dt, P) {
+    const alive = P.filter(p => p.alive);
+    // apparition progressive des monstres de la vague
+    if (this.phase === "play" && this.queue.length) {
+      this.spawnT -= dt;
+      const cap = Math.min(24, 6 + 2 * alive.length + this.wave);
+      if (this.spawnT <= 0 && this.mons.filter(m => m.st !== "dead").length < cap) { this.spawnMon(this.queue.shift()); this.spawnT = COOP.spawnEvery; }
+    }
+    for (let i = this.mons.length - 1; i >= 0; i--) {
+      const m = this.mons[i], T = MON[m.type];
+      m.t += dt; m.ph += dt * 9; m.hitT = Math.max(0, m.hitT - dt); m.meleeT = Math.max(0, m.meleeT - dt);
+      const kd = Math.pow(0.02, dt); m.kbx *= kd; m.kby *= kd;
+      if (m.st === "dead") { if (m.t > 0.9) this.mons.splice(i, 1); continue; }
+      if (m.st === "stun") {
+        if (m.t > COOP.stun) { m.st = "chase"; m.t = 0; }
+        const vd = Math.pow(0.05, dt); m.vx *= vd; m.vy *= vd;
+        m.x += (m.vx + m.kbx) * dt; m.y += (m.vy + m.kby) * dt; collide(m);
+        continue;
+      }
+      let tgt = null, d = 1e9;
+      for (const p of alive) { const dd = Math.hypot(p.x - m.x, p.y - m.y); if (dd < d) { d = dd; tgt = p; } }
+      let spd = T.sp * this.monSpeed, tx, ty;
+      m.burst = false;
+      const wander = () => {
+        if (!m.wt || Math.hypot(m.wt.x - m.x, m.wt.y - m.y) < 40) m.wt = this.freeSpot(0);
+        tx = m.wt.x; ty = m.wt.y;
+      };
+      if (!tgt) { wander(); spd *= 0.5; }
+      else {
+        tx = tgt.x; ty = tgt.y;
+        if (m.type === "p") {
+          m.cyc -= dt; if (m.cyc <= 0) { m.jump = 0.6; m.cyc = 2.5 + rnd() * 2; }
+          if (m.jump > 0) { m.jump -= dt; spd *= 1.7; m.burst = true; }
+          tx += Math.sin(m.t * 2) * 70; ty += Math.cos(m.t * 1.6) * 70;
+        } else if (m.type === "g") {
+          const look = Math.min(1, d / 300); tx += tgt.vx * look; ty += tgt.vy * look; if (d < 240) spd *= 1.15;
+        } else if (m.type === "o") {
+          if (!m.mode) m.mode = "run";
+          m.cyc -= dt; if (m.cyc <= 0) { m.mode = m.mode === "run" ? "tired" : "run"; m.cyc = m.mode === "run" ? 2.6 : 1.8; }
+          if (m.mode === "tired") spd = 0; else spd *= 1.75;
+        } else if (m.type === "r") {
+          m.burst = d < 260; if (m.burst) spd *= 1.8;
+        } else if (m.type === "a") {
+          if (!m.mode) m.mode = "walk";
+          if (m.mode === "walk") { wander(); spd = 70; if (d < 320) { m.mode = "laugh"; m.cyc = 0.9; this.ev({ k: "laugh", id: m.id }); } }
+          else if (m.mode === "laugh") { m.cyc -= dt; spd = 0; m.face = tgt.x > m.x ? 1 : -1; if (m.cyc <= 0) m.mode = "chase"; }
+          else { spd *= d < 170 ? 1.3 : 1.15; m.burst = d < 170; if (d > 1000) { m.mode = "walk"; m.wt = null; } }
+        }
+      }
+      // cacas : ralentissent les monstres autour, celui qui marche dedans y passe (le boss perd 4 points)
+      for (let k = this.poops.length - 1; k >= 0; k--) {
+        const pp = this.poops[k], dp = Math.hypot(pp.x - m.x, pp.y - m.y);
+        if (dp < 170) spd *= 0.5;
+        if (dp < m.r + 30) {
+          const dx = m.x - pp.x, dy = m.y - pp.y, dl = Math.hypot(dx, dy) || 1;
+          this.poops.splice(k, 1);
+          this.ev({ k: "squish", x: r1(pp.x), y: r1(pp.y) });
+          this.hurtMon(m, this.players.get(pp.owner) || null, m.type === "a" ? 4 : 99, "poop", dx / dl * 300, dy / dl * 300);
+          break;
+        }
+      }
+      if (m.st !== "chase") continue;
+      let dx = tx - m.x, dy = ty - m.y, dl = Math.hypot(dx, dy) || 1, ax = dx / dl, ay = dy / dl;
+      if (m.hitObs) {
+        const o = m.hitObs, ox = m.x - o.x, oy = m.y - o.y, cr = ax * oy - ay * ox > 0 ? 1 : -1, ol = Math.hypot(ox, oy) || 1;
+        ax += -oy / ol * cr * 0.9; ay += ox / ol * cr * 0.9; m.hitObs = null;
+      }
+      for (const n of this.mons) {
+        if (n === m || n.st === "dead") continue;
+        const sx = m.x - n.x, sy = m.y - n.y, sd = Math.hypot(sx, sy);
+        if (sd < 56 && sd > 0) { ax += sx / sd * 0.8; ay += sy / sd * 0.8; }
+      }
+      const al = Math.hypot(ax, ay) || 1, k5 = Math.min(1, dt * 5);
+      m.vx += (ax / al * spd - m.vx) * k5; m.vy += (ay / al * spd - m.vy) * k5;
+      m.x += (m.vx + m.kbx) * dt; m.y += (m.vy + m.kby) * dt; collide(m);
+      if (Math.abs(m.vx) > 10 && m.mode !== "laugh") m.face = m.vx > 0 ? 1 : -1;
+      // morsure : 1 cœur, puis le joueur est intouchable un court instant
+      if (!tgt || (m.type === "o" && m.mode === "tired") || (m.type === "a" && m.mode !== "chase")) continue;
+      for (const p of alive) {
+        if (p.inv > 0 || !p.alive) continue;
+        const bx = p.x - m.x, by = p.y - m.y, bd = Math.hypot(bx, by) || 1;
+        if (bd > m.r + p.r - 4) continue;
+        p.inv = COOP.inv;
+        this.damage(p, null, "mon", bx / bd * 600, by / bd * 600);
+        m.kbx = -bx / bd * 300; m.kby = -by / bd * 300;
+      }
+    }
+  }
+  updatePhaseCoop(dt) {
+    const n = this.players.size;
+    if (this.phase === "wait") { if (n >= 1) this.startRun(); return; }
+    this.phaseT -= dt;
+    const allDead = n > 0 && [...this.players.values()].every(p => !p.alive);
+    if (this.phase === "count") {
+      if (this.phaseT <= 0) this.startWave(COOP.firstWave);
+    } else if (this.phase === "play") {
+      if (allDead) { this.endRound("lose"); return; }
+      if (!this.monsLeft()) {
+        this.setPhase("break", COOP.breakT);
+        for (const p of this.players.values()) if (!p.alive) this.respawn(p);
+        this.ev({ k: "wclear", n: this.wave });
+      }
+    } else if (this.phase === "break") {
+      if (allDead) { this.endRound("lose"); return; }
+      if (this.phaseT <= 0) this.startWave(this.wave + 1);
+    } else if (this.phase === "end") {
+      if (this.phaseT <= 0) {
+        if (n >= 1) this.startRun();
+        else { this.podium = null; this.setPhase("wait", 0); }
+      }
+    }
   }
   updatePhase(dt) {
+    if (this.coop) { this.updatePhaseCoop(dt); return; }
     const n = this.players.size;
     if (this.phase === "wait") {
       if (n >= 2) { this.resetRound(); this.round++; this.setPhase("count", ROUND.count); this.ev({ k: "rcount", n: this.round }); }
@@ -159,7 +337,7 @@ class Room {
     }
   }
   // pendant le compte à rebours et le podium, on ne peut pas attaquer
-  canFight() { return this.phase === "play" || this.phase === "wait"; }
+  canFight() { return this.phase === "play" || this.phase === "wait" || this.phase === "break"; }
 
   spawnPower() {
     const s = this.freeSpot(260);
@@ -207,7 +385,7 @@ class Room {
     this.ev({ k: "prout", id: p.id });
   }
   onSuper(p) {
-    if (!p.alive || p.pk < SUPER.need || p.spT > 0 || this.phase === "count" || this.phase === "end") return;
+    if (!p.alive || p.pk < this.supNeed() || p.spT > 0 || this.phase === "count" || this.phase === "end") return;
     p.pk = 0; p.spT = SUPER.time; p.quoiT = 0.2; p.stun = 0; p.shield = 0;
     this.ev({ k: "super", id: p.id, s: SUPER_KIND[p.ch] || "melee" });
   }
@@ -226,8 +404,8 @@ class Room {
     this.ev({ k: "hit", id: v.id, by: by ? by.id : 0, kind, kx: r1(kx), ky: r1(ky) });
     v.kbBudget = (v.kbBudget || 0) + 160;
     if (v.hp <= 0) {
-      v.alive = false; v.deadT = R.respawn; v.deaths++; v.streak = 0; v.gauge = 0; v.cafe = 0; v.pw = ""; v.pwT = 0; v.spT = 0;
-      if (by && by !== v) { by.kills++; by.streak++; if (!(by.spT > 0) && by.pk < SUPER.need) { by.pk++; if (by.pk === SUPER.need) this.ev({ k: "superok", id: by.id }); } }
+      v.alive = false; v.deadT = this.coop ? COOP.respawn : R.respawn; v.deaths++; v.streak = 0; v.gauge = 0; v.cafe = 0; v.pw = ""; v.pwT = 0; v.spT = 0;
+      if (by && by !== v) { by.kills++; by.streak++; if (!(by.spT > 0) && by.pk < this.supNeed()) { by.pk++; if (by.pk === this.supNeed()) this.ev({ k: "superok", id: by.id }); } }
       this.ev({ k: "kill", id: v.id, by: by ? by.id : 0, kind, streak: by ? by.streak : 0 });
     }
     return true;
@@ -240,27 +418,28 @@ class Room {
     for (const p of P) {
       if (p.pwT > 0) { p.pwT -= dt; if (p.pwT <= 0) { p.pw = ""; p.pwT = 0; } }
       p.cd = Math.max(0, p.cd - dt); p.shield = Math.max(0, p.shield - dt); p.stun = Math.max(0, p.stun - dt);
-      p.boost = Math.max(0, p.boost - dt); p.hitT = Math.max(0, p.hitT - dt);
+      p.boost = Math.max(0, p.boost - dt); p.hitT = Math.max(0, p.hitT - dt); p.inv = Math.max(0, (p.inv || 0) - dt);
       if (p.actT > 0) { p.actT -= dt; if (p.actT <= 0) p.act = ""; }
       if (!p.alive) {
         p.deadT -= dt;
-        if (p.deadT <= 0) {
-          const s = this.freeSpot(500, 140);
-          p.spawnN++; p.lastMove = Date.now(); p.pw = ""; p.pwT = 0; p.spT = 0;
-          Object.assign(p, { x: s.x, y: s.y, vx: 0, vy: 0, hp: R.hp, alive: true, shield: R.spawnShield, stun: 0, act: "", kbBudget: 0 });
-          this.ev({ k: "spawn", id: p.id, x: r1(p.x), y: r1(p.y), sn: p.spawnN });
-        }
+        // en coopération, pas de retour pendant que l'équipe est déjà perdue
+        if (p.deadT <= 0 && this.phase !== "end") this.respawn(p);
         continue;
       }
       // pouvoir du perso
-      if (TEST_SUPER && !(p.spT > 0)) p.pk = SUPER.need;
+      if (TEST_SUPER && !(p.spT > 0)) p.pk = this.supNeed();
       if (p.spT > 0) {
         p.spT -= dt;
         const sk = superOf(p);
         if (p.spT <= 0) { p.spT = 0; this.ev({ k: "superend", id: p.id }); }
         else if (sk === "ram" || sk === "melee") {
           const rad = sk === "ram" ? SUPER.ramR : SUPER.meleeR;
-          for (const v of P) {
+          if (this.coop) for (const m of this.mons) {
+            if (m.st === "dead" || m.meleeT > 0 || Math.hypot(m.x - p.x, m.y - p.y) > rad + 4) continue;
+            const dx = m.x - p.x, dy = m.y - p.y, d = Math.hypot(dx, dy) || 1;
+            m.meleeT = 0.35; this.hurtMon(m, p, m.type === "a" ? 3 : 99, sk, dx / d * 520, dy / d * 520);
+          }
+          if (!this.coop) for (const v of P) {
             if (v === p || !v.alive || v.shield > 0) continue;
             if (Math.hypot(v.x - p.x, v.y - p.y) > rad) continue;
             if (v.pw === "armor" || superOf(v) === "guard") continue;
@@ -272,7 +451,11 @@ class Room {
             if (p.quoiT <= 0) {
               p.quoiT = SUPER.quoiEvery;
               this.ev({ k: "quoi", id: p.id });
-              for (const v of P) {
+              if (this.coop) for (const m of this.mons) {
+                const dx = m.x - p.x, dy = m.y - p.y, d = Math.hypot(dx, dy) || 1;
+                if (m.st === "chase" && d < SUPER.quoiR) this.stunMon(m, dx / d * 360, dy / d * 360, 1.3);
+              }
+              if (!this.coop) for (const v of P) {
                 if (v === p || !v.alive || v.shield > 0 || superOf(v) === "ram" || superOf(v) === "guard") continue;
                 const dx = v.x - p.x, dy = v.y - p.y, d = Math.hypot(dx, dy) || 1;
                 if (d > SUPER.quoiR) continue;
@@ -311,6 +494,7 @@ class Room {
         this.ev({ k: "cafe", id: p.id });
       }
     }
+    if (this.coop) this.updateMons(dt, P);
     if (this.powers.length < POW_MAX && this.phase !== "end") { this.powT -= dt; if (this.powT <= 0) { this.powT = 9 + rnd() * 6; this.spawnPower(); } }
     if (!this.coffee) { this.coffeeT -= dt; if (this.coffeeT <= 0) { const s = this.freeSpot(250); this.coffee = { x: s.x, y: s.y }; this.itemsDirty = true; } }
 
@@ -322,8 +506,14 @@ class Room {
       let dead = b.life <= 0 || b.x < 30 || b.x > W - 30 || b.y < 40 || b.y > H - 30;
       if (!dead) {
         const sx = b.x - x0, sy = b.y - y0, sl = sx * sx + sy * sy || 1;
-        let hitT = 2, hitP = null;
-        for (const p of P) {
+        let hitT = 2, hitP = null, hitM = null;
+        // coopération : les carreaux traversent les coéquipiers et touchent les monstres
+        if (this.coop) for (const m of this.mons) {
+          if (m.st === "dead") continue;
+          let t = ((m.x - x0) * sx + (m.y - y0) * sy) / sl; t = clamp(t, 0, 1);
+          if (Math.hypot(x0 + sx * t - m.x, y0 + sy * t - m.y) < COOP.hitR && t < hitT) { hitT = t; hitM = m; }
+        }
+        if (!this.coop) for (const p of P) {
           if (p.id === b.owner || !p.alive) continue;
           let t = ((p.x - x0) * sx + (p.y - y0) * sy) / sl; t = clamp(t, 0, 1);
           const d = Math.hypot(x0 + sx * t - p.x, y0 + sy * t - p.y);
@@ -335,7 +525,11 @@ class Room {
           let t = ((o.x - x0) * sx + (o.y - y0) * sy) / sl; t = clamp(t, 0, 1);
           if (Math.hypot(x0 + sx * t - o.x, y0 + sy * t - o.y) < o.r + 4 && t < obsT) obsT = t;
         }
-        if (hitP && hitT <= obsT) {
+        if (hitM && hitT <= obsT) {
+          const sp = Math.hypot(b.vx, b.vy) || 1;
+          this.hurtMon(hitM, this.players.get(b.owner) || null, 1, "bolt", b.vx / sp * 220, b.vy / sp * 220);
+          dead = true;
+        } else if (hitP && hitT <= obsT) {
           const sh = this.players.get(b.owner);
           const sp = Math.hypot(b.vx, b.vy) || 1;
           if (superOf(hitP) === "guard") {
@@ -360,7 +554,13 @@ class Room {
     for (let i = this.clouds.length - 1; i >= 0; i--) {
       const c = this.clouds[i]; c.t += dt;
       const rad = Math.min(1, c.t / .35) * R.cloudR;
-      if (c.t < R.cloudLife - .3) for (const p of P) {
+      if (this.coop && c.t < R.cloudLife - .3) for (const m of this.mons) {
+        if (m.st !== "chase" || c.hit.has("m" + m.id) || Math.hypot(c.x - m.x, c.y - m.y) > rad + 10) continue;
+        c.hit.add("m" + m.id);
+        const dx = m.x - c.x, dy = m.y - c.y, d = Math.hypot(dx, dy) || 1;
+        this.stunMon(m, dx / d * 420, dy / d * 420);
+      }
+      if (!this.coop && c.t < R.cloudLife - .3) for (const p of P) {
         if (p.id === c.owner || !p.alive || c.hit.has(p.id) || p.shield > 0 || superOf(p) === "ram" || superOf(p) === "guard") continue;
         if (Math.hypot(c.x - p.x, c.y - p.y) < rad + 10) {
           c.hit.add(p.id); p.stun = R.stun; p.kbBudget = (p.kbBudget || 0) + 300;
@@ -375,7 +575,7 @@ class Room {
     for (let i = this.poops.length - 1; i >= 0; i--) {
       const pp = this.poops[i]; pp.t += dt;
       let gone = pp.t > R.poopLife;
-      if (!gone) for (const p of P) {
+      if (!gone && !this.coop) for (const p of P) {
         if (p.id === pp.owner || !p.alive || p.shield > 0) continue;
         if (Math.hypot(pp.x - p.x, pp.y - p.y) < p.r + 26) {
           const dx = p.x - pp.x, dy = p.y - pp.y, d = Math.hypot(dx, dy) || 1;
@@ -406,14 +606,21 @@ class Room {
       i: sendItems ? this.items.map(it => [it.id, Math.round(it.x), Math.round(it.y), it.k]) : undefined,
       c: sendItems ? (this.coffee ? [Math.round(this.coffee.x), Math.round(this.coffee.y)] : 0) : undefined,
       w: sendItems ? this.powers.map(w => [w.id, Math.round(w.x), Math.round(w.y), w.k]) : undefined,
-      g: [this.phase, Math.max(0, Math.ceil(this.phaseT * 10) / 10), this.round],
+      g: [this.phase, Math.max(0, Math.ceil(this.phaseT * 10) / 10), this.round, this.wave, this.coop ? this.monsLeft() : 0],
+      // monstres : [id, type, x, y, drapeaux, pv, pv max]
+      m: this.coop ? this.mons.map(m => {
+        let f = 0;
+        if (m.st === "stun") f |= 1; if (m.mode === "tired") f |= 2; if (m.burst) f |= 4; if (m.mode === "laugh") f |= 8;
+        if (m.st === "dead") f |= 16; if (m.face < 0) f |= 32; if (m.hitT > 0) f |= 64; if (m.mode === "walk") f |= 128;
+        return [m.id, m.type, r1(m.x), r1(m.y), f, m.hp, m.max];
+      }) : undefined,
       pp: this.poops.map(p => [p.id, p.owner, Math.round(p.x), Math.round(p.y), r1(p.t)]),
       cl: this.clouds.map(c => [c.id, c.owner, Math.round(c.x), Math.round(c.y), r1(c.t)]),
       e: this.events,
     };
   }
   roster() {
-    return { t: "roster", r: [...this.players.values()].map(p => [p.id, p.name, p.ch, p.kills, p.deaths]), pod: this.phase === "end" ? this.podium : null };
+    return { t: "roster", mode: this.mode, wv: this.wave, r: [...this.players.values()].map(p => [p.id, p.name, p.ch, p.kills, p.deaths]), pod: this.phase === "end" ? this.podium : null };
   }
   broadcast(obj) {
     const s = JSON.stringify(obj);
@@ -423,7 +630,7 @@ class Room {
     this.update(dt);
     const evs = this.events;
     this.broadcast(this.snapshot());
-    if (this.rosterDirty || evs.some(e => e.k === "kill" || e.k === "join" || e.k === "leave") || !this.rosterT || this.t - this.rosterT > 2) {
+    if (this.rosterDirty || evs.some(e => e.k === "kill" || e.k === "mkill" || e.k === "join" || e.k === "leave") || !this.rosterT || this.t - this.rosterT > 2) {
       this.rosterT = this.t; this.rosterDirty = false; this.broadcast(this.roster());
     }
     this.events = [];
@@ -435,7 +642,7 @@ const server = http.createServer((req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   if (req.url.startsWith("/rooms")) {
     res.setHeader("Content-Type", "application/json");
-    res.end(JSON.stringify([...rooms.values()].map(r => ({ code: r.code, n: r.players.size, max: MAX_PLAYERS, phase: r.phase }))));
+    res.end(JSON.stringify([...rooms.values()].map(r => ({ code: r.code, n: r.players.size, max: MAX_PLAYERS, phase: r.phase, mode: r.mode, wave: r.wave }))));
     return;
   }
   res.setHeader("Content-Type", "text/plain; charset=utf-8");
@@ -462,14 +669,15 @@ wss.on("connection", ws => {
       if (!name) { ws.send(JSON.stringify({ t: "error", msg: "Pseudo invalide." })); return; }
       const code = cleanRoom(m.room);
       room = rooms.get(code);
-      if (!room) { room = new Room(code); rooms.set(code, room); }
+      // la salle garde le mode choisi par celui qui l'a créée
+      if (!room) { room = new Room(code, m.mode); rooms.set(code, room); }
       if (room.players.size >= MAX_PLAYERS) {
         ws.send(JSON.stringify({ t: "full", room: code, max: MAX_PLAYERS }));
         if (!room.players.size) rooms.delete(code);
         room = null; return;
       }
       me = room.addPlayer(ws, name, m.ch);
-      ws.send(JSON.stringify({ t: "welcome", id: me.id, room: code, x: me.x, y: me.y, max: MAX_PLAYERS, rules: { round: ROUND, pow: POW, sup: SUPER, hp: R.hp, fireCd: R.fireCd, boltSpeed: R.boltSpeed, boltLife: R.boltLife, speed: R.speed, boost: R.boost, cloudR: R.cloudR, cloudLife: R.cloudLife, poopLife: R.poopLife, respawn: R.respawn } }));
+      ws.send(JSON.stringify({ t: "welcome", id: me.id, room: code, x: me.x, y: me.y, max: MAX_PLAYERS, mode: room.mode, rules: { mode: room.mode, coop: room.coop ? COOP : null, round: ROUND, pow: POW, sup: Object.assign({}, SUPER, { need: room.supNeed() }), hp: R.hp, fireCd: R.fireCd, boltSpeed: R.boltSpeed, boltLife: R.boltLife, speed: R.speed, boost: R.boost, cloudR: R.cloudR, cloudLife: R.cloudLife, poopLife: R.poopLife, respawn: room.coop ? COOP.respawn : R.respawn } }));
       room.broadcast(room.roster());
       return;
     }

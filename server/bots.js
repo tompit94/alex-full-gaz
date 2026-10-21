@@ -1,29 +1,33 @@
-// Bots de test : node bots.js [nombre] [salle] [adresse]
+// Bots de test : node bots.js [nombre] [salle] [adresse] [mode]
 // ex. node bots.js 4 GAZ ws://localhost:8080
+//     node bots.js 2 MONSTRES ws://localhost:8080 coop   (coopération : les bots chassent les monstres)
 "use strict";
 const WebSocket = require("ws");
 const { W, H, collide } = require("./world");
 
-const N = +process.argv[2] || 3, ROOM = process.argv[3] || "GAZ", URL = process.argv[4] || "ws://localhost:8080";
+const N = +process.argv[2] || 3, ROOM = process.argv[3] || "GAZ", URL = process.argv[4] || "ws://localhost:8080", MODE = process.argv[5] || "versus";
 const NAMES = ["Robot Turbo", "Bot Croissant", "Bot Lasagne", "Robo Prout", "Bot Éclair", "Bot Penne", "Robo Donut", "Bot Burger", "Bot Café"];
-const stats = { shots: 0, hits: 0, kills: 0 };
+const stats = { shots: 0, hits: 0, kills: 0, mkills: 0, wave: 0, bites: 0 };
 
 function bot(i) {
   const ws = new WebSocket(URL);
   const me = { id: 0, x: 0, y: 0, vx: 0, vy: 0, r: 22, a: 0, sn: 0, alive: true, tx: 0, ty: 0, cd: 0 };
   let others = [];
-  ws.on("open", () => ws.send(JSON.stringify({ t: "join", room: ROOM, name: NAMES[i % NAMES.length], ch: ["sucre", "sale", "italien", "mihide", "yonarie", "arthur", "gargar", "mike"][i % 8] })));
+  ws.on("open", () => ws.send(JSON.stringify({ t: "join", room: ROOM, mode: MODE, name: NAMES[i % NAMES.length], ch: ["sucre", "sale", "italien", "mihide", "yonarie", "arthur", "gargar", "mike"][i % 8] })));
   ws.on("message", raw => {
     const m = JSON.parse(raw);
     if (m.t === "welcome") { me.id = m.id; me.x = m.x; me.y = m.y; pickTarget(); }
     if (m.t === "full") { console.log("salle pleine"); ws.close(); }
     if (m.t === "s") {
-      others = m.p.filter(p => p[0] !== me.id && p[6] & 1);
+      // cibles : les autres joueurs en bataille, les monstres en coopération
+      others = m.m ? m.m.filter(o => !(o[4] & 16)).map(o => [o[0], o[2], o[3]]) : m.p.filter(p => p[0] !== me.id && p[6] & 1);
+      if (m.g) stats.wave = m.g[3];
       const mine = m.p.find(p => p[0] === me.id); if (mine) { me.alive = !!(mine[6] & 1); if (mine[14] >= 3 && me.alive) ws.send(JSON.stringify({ t: "super" })); }
       for (const e of m.e) {
         if (e.k === "spawn" && e.id === me.id) { me.x = e.x; me.y = e.y; me.sn = e.sn; }
         if (e.k === "hit" && e.id === me.id) { me.vx += e.kx; me.vy += e.ky; }
-        if (i === 0) { if (e.k === "shoot") stats.shots++; if (e.k === "hit") stats.hits++; if (e.k === "kill") stats.kills++; }
+        if (i === 0) { if (e.k === "shoot") stats.shots++; if (e.k === "hit") stats.hits++; if (e.k === "kill") stats.kills++; if (e.k === "mkill") stats.mkills++; if (e.k === "hit" && e.kind === "mon") stats.bites++; }
+        if (i === 0 && ["wave", "wclear", "rend", "boss"].includes(e.k)) console.log(JSON.stringify(e));
       }
     }
   });
