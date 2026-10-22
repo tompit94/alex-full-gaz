@@ -268,7 +268,7 @@ html,body{height:100%;overflow:hidden;background:#2f6b2a;color:var(--ink);font-f
 #mpFeed div{background:rgba(13,9,18,.62);color:var(--parch);padding:3px 7px;border-radius:2px;animation:feedIn .25s ease-out;max-width:62vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #mpFeed b{color:var(--flame);font-weight:700}#mpFeed .k{color:#ff7a5c}
 @keyframes feedIn{from{transform:translateX(-12px);opacity:0}}
-/* classement en cours de partie (TAB ou bouton 🏆) */
+/* classement en cours de partie (Alt Gr ou bouton 🏆) */
 #mpRank{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(9,5,15,.55);z-index:6;padding:12px;cursor:pointer}
 #mpRank .rcard{background:linear-gradient(180deg,var(--stone-2),var(--stone) 40%,#17111f);border:4px solid var(--edge);border-radius:4px;
   box-shadow:0 0 0 3px #1d4a66,0 0 0 6px var(--edge),0 0 34px 8px rgba(90,190,255,.18);padding:12px 14px;width:min(460px,100%);max-height:calc(100% - 8px);overflow:auto;color:var(--parch);font-family:var(--pixbody)}
@@ -422,7 +422,7 @@ body.mpPw #mpTimer{top:calc(150px + env(safe-area-inset-top,0px))}
     <div class="cartimer out" id="carT" hidden><span><span id="carL">FULL GAZ !</span> <span id="carS">15</span> s</span><div class="cbar"><i id="carBar"></i></div></div>
   </div>
   <div class="right">
-    <div class="icons"><button id="rankB" aria-label="Classement (touche Tab)" title="Classement (Tab)" hidden>🏆</button><button id="mute" aria-label="Couper le son">🔊</button><button id="pauseB" aria-label="Pause">II</button></div>
+    <div class="icons"><button id="rankB" aria-label="Classement (touche Alt Gr)" title="Classement (Alt Gr)" hidden>🏆</button><button id="mute" aria-label="Couper le son">🔊</button><button id="pauseB" aria-label="Pause">II</button></div>
     <div class="cafe out" id="cafe"><span>CAFÉ</span><span class="cup" id="cupIco"></span><span id="cafeN">×0</span><span class="key deskOnly">C</span></div>
   </div>
 </div>
@@ -929,9 +929,11 @@ function spawnMon(type){let p;for(let k=0;k<60;k++){p=freeSpot(560);const sx=(p.
 /* ---------- input ---------- */
 const keysDown=new Set();const joy={on:false,id:null,bx:0,by:0,x:0,y:0};let touchMode=matchMedia("(pointer:coarse)").matches;
 addEventListener("keydown",e=>{const k=e.key.toLowerCase();if(["arrowup","arrowdown","arrowleft","arrowright"," "].includes(k))e.preventDefault();keysDown.add(k);
-  if(MP){if(k==="tab"&&$("pauseS").hidden){e.preventDefault();if(!e.repeat)mpRank(true,true);return}if(!e.repeat)mpKey(k);return}
+  if(MP){if(isRankKey(e)){e.preventDefault();if(!e.repeat&&$("pauseS").hidden)mpRank(true,true);return}if(!e.repeat)mpKey(k);return}
   if(!running||paused)return;if(k===" "&&!e.repeat)doProut();if(k==="c"&&!e.repeat)doCaca();if(k==="p"||k==="escape")setPause(true)});
-addEventListener("keyup",e=>{const k=e.key.toLowerCase();keysDown.delete(k);if(k==="tab"&&MP&&MP.rankTab)mpRank(false)});
+// classement : Alt Gr maintenu (code AltRight ; sous Windows Chrome envoie aussi un Ctrl gauche, ignoré)
+function isRankKey(e){return e.key==="AltGraph"||e.code==="AltRight"}
+addEventListener("keyup",e=>{const k=e.key.toLowerCase();keysDown.delete(k);if(isRankKey(e)){e.preventDefault();if(MP&&MP.rankTab)mpRank(false)}});
 addEventListener("blur",()=>{if(MP&&MP.rankTab)mpRank(false)});
 cvs.addEventListener("pointerdown",e=>{if(e.pointerType!=="mouse"){touchMode=true;applyTouchUI()}if(MP){mpPointer("down",e);return}if(!running||paused||e.pointerType==="mouse")return;
   if(!joy.on){joy.on=true;joy.id=e.pointerId;joy.bx=joy.x=e.clientX;joy.by=joy.y=e.clientY;try{cvs.setPointerCapture(e.pointerId)}catch(_){}}});
@@ -1313,7 +1315,7 @@ function openMP(){if(!askPseudo())return;audio();$("startS").hidden=true;$("mpS"
   if(invite){const inv=invite;invite=null;$("mpRoom").value=inv.room;$("mpRoom").dataset.touched="1";$("mpPriv").checked=inv.priv;
     try{const u=new URL(location.href);["salle","mode","prive"].forEach(k=>u.searchParams.delete(k));history.replaceState(null,"",u)}catch(e){}
     if(mpUrl()){loadMpImgs();setTimeout(mpJoin,0);return}}
-  $("mpCtrl").textContent=touchMode?"Doigt à gauche : courir · doigt à droite : viser et tirer · TIR : tir automatique":"ZQSD ou flèches : courir · souris : viser · clic : tirer · Espace : prout · C : caca · E : pouvoir · Tab : classement";
+  $("mpCtrl").textContent=touchMode?"Doigt à gauche : courir · doigt à droite : viser et tirer · TIR : tir automatique":"ZQSD ou flèches : courir · souris : viser · clic : tirer · Espace : prout · C : caca · E : pouvoir · Alt Gr : classement";
   const u=mpUrl(),msg=$("mpMsg");msg.className="save";msg.textContent="";$("mpJoin").disabled=!u;
   if(!u){msg.className="save bad";msg.textContent="Le serveur multijoueur n'est pas encore branché : ajoute son adresse (multiUrl) dans config.js.";$("mpRooms").replaceChildren();return}
   loadMpImgs();refreshRooms(true);clearInterval(roomsTimer);roomsTimer=setInterval(()=>{if($("mpS").hidden){clearInterval(roomsTimer);return}refreshRooms(false)},4000);$("mpJoin").focus()}
@@ -1624,7 +1626,7 @@ function renderMpBoard(){if(!MP)return;const rows=mpRanking();MP.leader=rows.len
     shown.map(([id,r])=>{const o=id===MP.id?MP.me:MP.others.get(id);const dead=o&&(id===MP.id?!o.alive:!(o.f&1));
       return`<div class="r${id===MP.id?" me":""}${dead?" dead":""}"><span>${id===MP.leader?"👑 ":""}${esc(r.name)}</span><i>${r.kills}</i><em>${r.deaths}</em></div>`}).join("")}
 
-/* ---------- classement en cours de partie : TAB maintenu (ordinateur) ou bouton 🏆 ---------- */
+/* ---------- classement en cours de partie : Alt Gr maintenu (ordinateur) ou bouton 🏆 ---------- */
 function mpRank(on,byTab){if(!MP)return;MP.rankOpen=on;MP.rankTab=on&&!!byTab;$("rankB").setAttribute("aria-pressed",on?"true":"false");
   if(on){MP.rankSig="";renderMpRank();$("mpRank").hidden=false}else $("mpRank").hidden=true}
 function renderMpRank(){if(!MP)return;const rows=mpRanking(),co=MP.coop,me=MP.id,now=performance.now();
@@ -1640,7 +1642,7 @@ function renderMpRank(){if(!MP)return;const rows=mpRanking(),co=MP.coop,me=MP.id
     const cur=got>0?prizeAt(got*PRIZE_EVERY):null;
     prize=`<p class="prize">${cur?`Trophée de l'équipe : <b>${cur.e} ${esc(cur.name)}</b>`:"Pas encore de trophée"}<br>Prochain prix à la vague ${nxt}${got<PRIZES.length?` (${got}/${PRIZES.length})`:""}</p>`}
   const html=`<div class="rcard"><h2>Classement</h2><p class="sub">${sub}</p><table><thead><tr><th></th><th class="n">Joueur</th><th>${co?"Monstres":"K.O."}</th><th>Morts</th></tr></thead><tbody>${body}</tbody></table>${prize}
-    <p class="hint">${MP.rankTab?"Relâche Tab pour fermer":"Touche pour fermer"}</p></div>`;
+    <p class="hint">${MP.rankTab?"Relâche Alt Gr pour fermer":"Touche pour fermer"}</p></div>`;
   if(html===MP.rankSig)return;MP.rankSig=html;$("mpRank").innerHTML=html}
 
 /* ---------- coopération : un prix pour l'équipe toutes les 5 vagues (échelle de 30 prix) ---------- */
