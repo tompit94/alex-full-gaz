@@ -517,7 +517,7 @@ body.mpPw #mpTimer{top:calc(150px + env(safe-area-inset-top,0px))}
       <li><b>Pas de tir ami :</b> carreaux, prouts, cacas et pouvoirs ne touchent que les monstres.</li>
       <li><b>Une morsure = -1 cœur.</b> K.O., tu reviens 6 s plus tard, et tous les K.O. reviennent entre deux vagues.</li>
       <li><b>Si toute l'équipe est K.O. en même temps</b>, c'est perdu : podium des meilleurs chasseurs, puis on recommence.</li>
-      <li><b>Pouvoir du perso :</b> 5 monstres éliminés remplissent la jauge.</li>
+      <li><b>Pouvoir du perso :</b> 5 monstres éliminés remplissent la jauge, puis 6 s d'invincibilité : plus rapide, monstres éliminés au contact.</li>
     </ul>
     <ul class="mprules" id="rulesVersus">
       <li><b>Manches de 3 min</b> jusqu'à 10 joueurs : le plus de K.O. gagne, ou le premier à 15. Podium, puis on remet ça !</li>
@@ -525,7 +525,7 @@ body.mpPw #mpTimer{top:calc(150px + env(safe-area-inset-top,0px))}
       <li><b>Friandises :</b> +1 cœur et la jauge de prout. Le prout étourdit les autres.</li>
       <li><b>Café :</b> coup de boost et un caca piégé à poser.</li>
       <li><b>Super-pâtisseries dorées :</b> éclair = tir rapide, glace = tir triple, donut = bouclier.</li>
-      <li><b>Pouvoir du perso :</b> 3 K.O. remplissent la jauge, puis 6 s de voiture, Vespa, machette, Opinel, baguette, ventouse, bâton serpent, gode, tournevis ou bouclier !</li>
+      <li><b>Pouvoir du perso :</b> 3 K.O. remplissent la jauge, puis 6 s d'invincibilité : plus rapide et K.O. en un coup au contact. Même pouvoir pour tous, seul le look change (voiture, Vespa, machette, bouclier…) !</li>
     </ul>
     <p class="hint" id="mpCtrl"></p>
     <p class="hint" id="mpModeHint">Une salle garde le mode choisi par celui qui l'a créée.</p>
@@ -895,6 +895,8 @@ const PWR={car:{img:"key",label:"FULL GAZ !",end:"Fin du trajet",appear:"Une cl�
   plunger:{img:"plunger",label:"VENTOUSE !",end:"Ventouse décollée",appear:"Une ventouse est apparue ! Suis la flèche dorée",gone:"La ventouse a disparu…",hit:"SPLOTCH ! +",idle:"tmh_idle",run:"tmh_run",n:3,atk:"tmh_atk"},
   snake:{img:"snakestaff",label:"BÂTON SERPENT !",end:"Le serpent fait la sieste",appear:"Un bâton serpent est apparu ! Suis la flèche dorée",gone:"Le bâton serpent a disparu…",hit:"SSSSS ! +",idle:"dh_idle",run:"dh_run",n:3,atk:"dh_atk"},
   vespa:{img:"v_solo",label:"VESPA !",end:"Fin de la balade",appear:"Une Vespa est apparue ! Suis la flèche dorée",gone:"La Vespa a disparu…",hit:"VROUM ! +"}};
+// pouvoir : même avantage pour tous les persos (seul le look change) : immunité totale, K.O. au contact, même vitesse
+const SUPER_SPEED=400,SUPER_ACC=8,SUPER_REACH=48;
 const PWX=()=>PWR[CH.power];const isVespa=()=>CH.power==="vespa";
 let chKey="sucre";try{const c=localStorage.getItem("gef_char");if(CHARS[c])chKey=c}catch(e){}
 let CH=CHARS[chKey];const isCar=()=>CH.power==="car";const PU=()=>IMG[PWX().img];
@@ -963,7 +965,7 @@ function spawnKey(){const P=S.P;let best=null;
   toast(PWX().appear.replace(/ ! Suis la flèche dorée$/," !"));puff(best.x,best.y-30,"#ffe27a",14)}
 const phone=()=>touchMode||vw<620;
 let toastT=null;function toast(s){const el=$("toast");el.textContent=s;el.hidden=false;el.classList.remove("show");void el.offsetWidth;el.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>{el.hidden=true},phone()?2000:2800)}
-function startCar(){const P=S.P;S.car=15;S.carCombo=0;S.key=null;S.keyT=30+R()*15;P.act=null;P.actT=0;P.r=isCar()?36:isVespa()?30:24;P.inv=0;cam.shake=10;
+function startCar(){const P=S.P;S.car=15;S.carCombo=0;S.key=null;S.keyT=30+R()*15;P.act=null;P.actT=0;P.r=30;P.inv=0;cam.shake=10;
   if(isCar()||isVespa()){SFX.horn();engineStart();if(ENG)ENG.mul=isVespa()?1.9:1}else SFX.hammerUp();P.lookT=0;P.quoiT=.4;
   puff(P.x,P.y-30,"#ffffff",18);txt(P.x,P.y-120,PWX().label,"#ffcf3a");hud()}
 function endCar(){const P=S.P;S.car=0;try{if(CH.power==="screw"&&window.speechSynthesis)speechSynthesis.cancel()}catch(e){}P.r=22;P.inv=2;engineStop();puff(P.x,P.y-30,"#d8d2c8",18);txt(P.x,P.y-120,PWX().end,"#fff6e0");collide(P);hud()}
@@ -982,8 +984,8 @@ function update(dt){
   S.t+=dt;const P=S.P,diff=Math.min(1.7,1+S.t/150);
   // player
   if(S.dying>0){S.dying-=dt;S.deadT=(S.deadT||0)+dt;if(S.dying<=0){gameOver();return}}
-  const iv=S.dying>0?{x:0,y:0}:inputVec(),inCar=S.car>0;let sp=inCar?(isCar()?430:isVespa()?400:345):265*(P.boost>0?1.35:1)*(P.act==="eat"?.75:1);P.boost=Math.max(0,P.boost-dt);
-  const acc=inCar&&isCar()?4.5:inCar&&isVespa()?7:12;P.swing=Math.max(0,(P.swing||0)-dt);P.vx+=(iv.x*sp-P.vx)*Math.min(1,dt*acc);P.vy+=(iv.y*sp-P.vy)*Math.min(1,dt*acc);
+  const iv=S.dying>0?{x:0,y:0}:inputVec(),inCar=S.car>0;let sp=inCar?SUPER_SPEED:265*(P.boost>0?1.35:1)*(P.act==="eat"?.75:1);P.boost=Math.max(0,P.boost-dt);
+  const acc=inCar?SUPER_ACC:12;P.swing=Math.max(0,(P.swing||0)-dt);P.vx+=(iv.x*sp-P.vx)*Math.min(1,dt*acc);P.vy+=(iv.y*sp-P.vy)*Math.min(1,dt*acc);
   if(inCar){if(Math.hypot(P.vx,P.vy)>40)P.ang=Math.atan2(P.vy,P.vx);S.car-=dt;if(ENG){const v=Math.hypot(P.vx,P.vy);const mu=ENG.mul||1;ENG.o.frequency.setTargetAtTime((50+v*.22)*mu,AC.currentTime,.08);ENG.o2.frequency.setTargetAtTime((25+v*.11)*mu,AC.currentTime,.08)}
     if((isCar()||isVespa())&&Math.hypot(P.vx,P.vy)>120&&R()<dt*25)S.parts.push({x:P.x-Math.cos(P.ang)*50,y:P.y-Math.sin(P.ang)*30,vx:-Math.cos(P.ang)*60,vy:-Math.sin(P.ang)*60-20,r:7,col:"rgba(200,195,190,.8)",t:0,life:.5});
     if(isVespa())P.lookT=Math.max(0,(P.lookT||0)-dt);
@@ -1014,7 +1016,7 @@ function update(dt){
     if(m.st==="dead"){if(m.t>(m.type==="a"?2.4:1.1)){puff(m.x,m.y-30,"#e9e2d5",16);S.parts.push({x:m.x,y:m.y-40,vx:0,vy:-60,r:0,skull:1,t:0,life:1.2});S.mons.splice(i,1)}continue}
     if(m.st==="squash"){if(m.t<.35){m.x+=m.kb.x*dt;m.y+=m.kb.y*dt;collide(m)}if(m.t>3){puff(m.x,m.y-10,"#e9e2d5",8);S.mons.splice(i,1)}continue}
     if(m.st==="stun"){if(m.t>4.2){m.st="chase";m.t=0}}
-    if(S.car>0){const d=dist(m,P);if(d<m.r+P.r+(isCar()?6:20)){squash(m);continue}
+    if(S.car>0){const d=dist(m,P);if(d<m.r+SUPER_REACH){squash(m);continue}
       if(m.st==="chase"){let ax=m.x-P.x,ay=m.y-P.y,dl=Math.hypot(ax,ay)||1;ax/=dl;ay/=dl;m.close=d<190;
         const e=180;if(m.x<e)ax+=(e-m.x)/e*1.6;if(m.x>W-e)ax-=(m.x-(W-e))/e*1.6;if(m.y<e)ay+=(e-m.y)/e*1.6;if(m.y>H-e)ay-=(m.y-(H-e))/e*1.6;
         ax+=Math.sin(m.t*3+m.ph*.1)*.35;ay+=Math.cos(m.t*2.6)*.35;
@@ -1064,7 +1066,7 @@ function update(dt){
 }
 const cloudR=c=>Math.min(1,c.t/.35)*190;
 function stun(m,c){m.st="stun";m.t=0;const dx=m.x-c.x,dy=m.y-c.y,d=Math.hypot(dx,dy)||1;m.kb.x=dx/d*420;m.kb.y=dy/d*420;S.score+=25;txt(m.x,m.y-80,"+25","#b5f25b");m.pop=.3}
-function hurt(m){const P=S.P;P.hp--;P.inv=1.6;P.act="hurt";P.actT=.6;SFX.hit();cam.shake=14;const dx=P.x-m.x,dy=P.y-m.y,d=Math.hypot(dx,dy)||1;P.vx=dx/d*600;P.vy=dy/d*600;m.kb.x=-dx/d*300;m.kb.y=-dy/d*300;
+function hurt(m){const P=S.P;if(S.car>0)return;P.hp--;P.inv=1.6;P.act="hurt";P.actT=.6;SFX.hit();cam.shake=14;const dx=P.x-m.x,dy=P.y-m.y,d=Math.hypot(dx,dy)||1;P.vx=dx/d*600;P.vy=dy/d*600;m.kb.x=-dx/d*300;m.kb.y=-dy/d*300;
   hud();if(P.hp<=0){S.dying=1.8;S.dead=true;S.deadArmed=S.car>0;P.inv=99;P.act=null;P.vx*=.3;P.vy*=.3;SFX.down()}}
 
 /* ---------- draw ---------- */
@@ -1281,7 +1283,7 @@ const MPW={rapid:{label:"TIR RAPIDE",name:"Éclair foudroyant",item:"eclair",col
 const SUPC={sucre:{k:"ram",pwr:"car",verb:"a écrasé"},italien:{k:"ram",pwr:"vespa",verb:"a renversé"},sale:{k:"melee",pwr:"hammer",verb:"a découpé"},
   arthur:{k:"melee",pwr:"dildo",verb:"a assommé"},gargar:{k:"melee",pwr:"opinel",verb:"a tranché"},yonarie:{k:"melee",pwr:"screw",verb:"a dévissé"},mike:{k:"melee",pwr:"baguette",verb:"a bastonné"},tommy:{k:"melee",pwr:"plunger",verb:"a débouché"},dodo:{k:"melee",pwr:"snake",verb:"a mordu"},mihide:{k:"guard",pwr:"shield",verb:"a eu"}};
 const supOf=ch=>SUPC[ch]||SUPC.sucre;
-const supDesc={ram:"fonce dans les autres pour les renverser",melee:"K.O. en un coup au contact",guard:"invulnérable, tu renvoies les carreaux"};
+const SUPER_DESC="invincible, plus rapide, K.O. en un coup au contact";const supDesc={ram:SUPER_DESC,melee:SUPER_DESC,guard:SUPER_DESC};
 const chOf=id=>id===MP.id?chKey:((MP.roster.get(id)||{}).ch||"sucre");
 function mpQuoi(o){if(o)txt(o.x,o.y-150,"Quoiiiiiiiii !?","#ff9fd6");if(muted)return;const d=o?Math.hypot(o.x-MP.me.x,o.y-MP.me.y):0;if(d>900)return;
   let spoke=false;try{if(window.speechSynthesis&&window.SpeechSynthesisUtterance){const u=new SpeechSynthesisUtterance("Quoiiiiiiiii !?");u.lang="fr-FR";u.pitch=1.7;u.rate=.9;u.volume=Math.max(.2,1-d/900);speechSynthesis.cancel();speechSynthesis.speak(u);spoke=true}}catch(e){}
@@ -1491,9 +1493,9 @@ function autoAim(){const P=MP.me;let best=null,bd=780;
 /* ---------- simulation locale ---------- */
 function mpUpdate(dt){const P=MP.me,Rl=MP.rules;MP.t+=dt;const now=performance.now();
   let iv=inputVec();if(!P.alive||!$("pauseS").hidden&&!touchMode)iv={x:0,y:0};
-  const sk=P.spT>0?supOf(chKey).k:"",sm=sk?(((Rl.sup||{}).speed||{})[sk]||1.3):1;
+  const sk=P.spT>0?supOf(chKey).k:"",sm=sk?(((Rl.sup||{}).speed||{})[sk]||1.5):1;
   if(P.spT>0)P.spT=Math.max(0,P.spT-dt);
-  const sp=(Rl.speed||265)*sm*(P.boost?(Rl.boost||1.35):1)*(P.stun&&sk!=="ram"&&sk!=="guard"?.4:1)*(P.act==="eat"?.75:1);
+  const sp=(Rl.speed||265)*sm*(P.boost?(Rl.boost||1.35):1)*(P.stun&&!sk?.4:1)*(P.act==="eat"?.75:1);
   P.vx+=(iv.x*sp-P.vx)*Math.min(1,dt*12);P.vy+=(iv.y*sp-P.vy)*Math.min(1,dt*12);
   P.kbx*=Math.pow(.02,dt);P.kby*=Math.pow(.02,dt);
   if(P.alive){P.x+=(P.vx+P.kbx)*dt;P.y+=(P.vy+P.kby)*dt;collide(P)}
@@ -1512,7 +1514,7 @@ function mpUpdate(dt){const P=MP.me,Rl=MP.rules;MP.t+=dt;const now=performance.n
   if(MP.tapFire){P.a=autoAim();P.face=Math.cos(P.a)>=0?1:-1}
   const fight=MP.phase==="play"||MP.phase==="wait";if(!fight)MP.tapFire=false;
   if(P.pwT>0){P.pwT=Math.max(0,P.pwT-dt);if(P.pwT<=0)P.pw=""}
-  if(want&&fight&&sk!=="ram"&&P.cd<=0&&P.alive&&!P.stun&&$("pauseS").hidden){mpFire();MP.tapFire=false}else if(MP.tapFire&&P.cd>.3)MP.tapFire=false;
+  if(want&&fight&&!sk&&P.cd<=0&&P.alive&&!P.stun&&$("pauseS").hidden){mpFire();MP.tapFire=false}else if(MP.tapFire&&P.cd>.3)MP.tapFire=false;
   // envoi de la position (20 fois par seconde)
   MP.sendT-=dt;if(MP.sendT<=0){MP.sendT=.05;send({t:"st",x:Math.round(P.x*10)/10,y:Math.round(P.y*10)/10,vx:Math.round(P.vx+P.kbx),vy:Math.round(P.vy+P.kby),a:Math.round(P.a*100)/100,mv:mv>30?1:0,sn:P.sn})}
   MP.pingT-=dt;if(MP.pingT<=0){MP.pingT=MP_PING_MS/1000;send({t:"ping",c:Math.round(now)})}

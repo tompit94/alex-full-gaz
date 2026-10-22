@@ -31,15 +31,16 @@ const POW = {
 };
 const POW_KINDS = Object.keys(POW), POW_MAX = 2;
 // Pouvoirs des persos : la jauge se remplit avec les K.O. (3 K.O. = pouvoir prêt), il dure 6 s
-//  ram   : véhicule (Alex = voiture, Nini = Vespa) — très rapide, renverse au contact, pas de tir, insensible au prout
-//  melee : arme blanche (Greg, Arthur, Gargar, Mike, Tommy, Yonarie, Dodo) — plus rapide, K.O. en un coup au contact, garde l'arbalète
-//  guard : bouclier (Mihide) — invulnérable, renvoie les carreaux à l'envoyeur
-//  Yonarie crie en plus « QUOIIII » toutes les 1,5 s : étourdit les adversaires proches
-const SUPER = { need: 3, time: 6, ramR: 64, meleeR: 60, quoiR: 230, quoiEvery: 1.5,
-  speed: { ram: 1.7, melee: 1.3, guard: 1.2 } };
+// Même avantage pour tous les persos (seul le look change : voiture, Vespa, arme, bouclier…) :
+//  - immunité totale : carreaux, prouts, cacas, morsures et étourdissements ne font rien
+//  - K.O. en un coup de tout adversaire (ou monstre) touché au contact
+//  - même vitesse pour tous, plus rapide qu'en temps normal ; pas de tir pendant le pouvoir
+const SUPER = { need: 3, time: 6, hitR: 62, quoiEvery: 1.5,
+  speed: { ram: 1.5, melee: 1.5, guard: 1.5 } };
 const TEST_SUPER = process.env.TEST_SUPER === "1"; // test : jauge pleine en permanence
 const SUPER_KIND = { sucre: "ram", italien: "ram", sale: "melee", arthur: "melee", gargar: "melee", mike: "melee", tommy: "melee", dodo: "melee", yonarie: "melee", mihide: "guard" };
 const superOf = p => (p.spT > 0 ? SUPER_KIND[p.ch] || "melee" : "");
+const powered = p => p.spT > 0;   // pouvoir actif : immunité totale
 // Mode Coopération : tous ensemble contre des vagues de monstres
 //  - pas de tirs amis : carreaux, prouts, cacas et pouvoirs ne touchent que les monstres
 //  - une vague est finie quand tous ses monstres sont éliminés ; pause, les K.O. reviennent, vague suivante
@@ -281,7 +282,7 @@ class Room {
       // morsure : 1 cœur, puis le joueur est intouchable un court instant
       if (!tgt || (m.type === "o" && m.mode === "tired") || (m.type === "a" && m.mode !== "chase")) continue;
       for (const p of alive) {
-        if (p.inv > 0 || !p.alive) continue;
+        if (p.inv > 0 || !p.alive || powered(p)) continue;
         const bx = p.x - m.x, by = p.y - m.y, bd = Math.hypot(bx, by) || 1;
         if (bd > m.r + p.r - 4) continue;
         p.inv = COOP.inv;
@@ -366,7 +367,7 @@ class Room {
     p.a = num(m.a, p.a); p.mv = m.mv ? 1 : 0;
   }
   onFire(p, m) {
-    if (!p.alive || p.stun > 0 || p.cd > 0 || !this.canFight() || superOf(p) === "ram") return;
+    if (!p.alive || p.stun > 0 || p.cd > 0 || !this.canFight() || powered(p)) return;
     // petite marge : le client compte son propre délai et peut tirer quelques ms en avance
     p.cd = (p.pw === "rapid" ? POW.rapid.fireCd : R.fireCd) - 0.04; p.shield = 0; p.act = "aim"; p.actT = 0.35;
     const a = num(m.a, p.a); p.a = a;
@@ -400,7 +401,7 @@ class Room {
 
   damage(v, by, kind, kx, ky) {
     if (!v.alive || v.shield > 0 || !this.canFight()) return false;
-    if (v.pw === "armor" || superOf(v) === "guard") { this.ev({ k: "block", id: v.id, x: r1(v.x), y: r1(v.y) }); return false; }
+    if (v.pw === "armor" || powered(v)) { this.ev({ k: "block", id: v.id, x: r1(v.x), y: r1(v.y) }); return false; }
     v.hp--; v.hitT = 0.25;
     this.ev({ k: "hit", id: v.id, by: by ? by.id : 0, kind, kx: r1(kx), ky: r1(ky) });
     v.kbBudget = (v.kbBudget || 0) + 160;
@@ -431,40 +432,26 @@ class Room {
       if (TEST_SUPER && !(p.spT > 0)) p.pk = this.supNeed();
       if (p.spT > 0) {
         p.spT -= dt;
-        const sk = superOf(p);
         if (p.spT <= 0) { p.spT = 0; this.ev({ k: "superend", id: p.id }); }
-        // en coopération, Mihide (bouclier) frappe aussi les monstres au contact : sinon son pouvoir ne servait à rien contre eux
-        else if (sk === "ram" || sk === "melee" || (sk === "guard" && this.coop)) {
-          const rad = sk === "ram" ? SUPER.ramR : SUPER.meleeR;
+        else {
+          const sk = superOf(p), rad = SUPER.hitR;
+          p.stun = 0;
           if (this.coop) for (const m of this.mons) {
             if (m.st === "dead" || m.meleeT > 0 || Math.hypot(m.x - p.x, m.y - p.y) > rad + 4) continue;
             const dx = m.x - p.x, dy = m.y - p.y, d = Math.hypot(dx, dy) || 1;
             m.meleeT = 0.35; this.hurtMon(m, p, m.type === "a" ? 3 : 99, sk, dx / d * 520, dy / d * 520);
           }
-          if (!this.coop && sk !== "guard") for (const v of P) {
-            if (v === p || !v.alive || v.shield > 0) continue;
+          if (!this.coop) for (const v of P) {
+            if (v === p || !v.alive || v.shield > 0 || powered(v)) continue;
             if (Math.hypot(v.x - p.x, v.y - p.y) > rad) continue;
-            if (v.pw === "armor" || superOf(v) === "guard") continue;
+            if (v.pw === "armor") continue;
             const dx = v.x - p.x, dy = v.y - p.y, d = Math.hypot(dx, dy) || 1;
-            v.hp = 1; this.damage(v, p, sk, dx / d * 520, dy / d * 520);
+            v.hp = 1; this.damage(v, p, sk === "guard" ? "melee" : sk, dx / d * 520, dy / d * 520);
           }
+          // Yonarie crie toujours « QUOIIII » (juste pour rire : plus d'étourdissement, même avantage pour tous)
           if (p.ch === "yonarie") {
             p.quoiT -= dt;
-            if (p.quoiT <= 0) {
-              p.quoiT = SUPER.quoiEvery;
-              this.ev({ k: "quoi", id: p.id });
-              if (this.coop) for (const m of this.mons) {
-                const dx = m.x - p.x, dy = m.y - p.y, d = Math.hypot(dx, dy) || 1;
-                if (m.st === "chase" && d < SUPER.quoiR) this.stunMon(m, dx / d * 360, dy / d * 360, 1.3);
-              }
-              if (!this.coop) for (const v of P) {
-                if (v === p || !v.alive || v.shield > 0 || superOf(v) === "ram" || superOf(v) === "guard") continue;
-                const dx = v.x - p.x, dy = v.y - p.y, d = Math.hypot(dx, dy) || 1;
-                if (d > SUPER.quoiR) continue;
-                v.stun = Math.max(v.stun, 1.1); v.kbBudget = (v.kbBudget || 0) + 260;
-                this.ev({ k: "stun", id: v.id, by: p.id, kx: r1(dx / d * 360), ky: r1(dy / d * 360) });
-              }
-            }
+            if (p.quoiT <= 0) { p.quoiT = SUPER.quoiEvery; this.ev({ k: "quoi", id: p.id }); }
           }
         }
       }
@@ -534,13 +521,7 @@ class Room {
         } else if (hitP && hitT <= obsT) {
           const sh = this.players.get(b.owner);
           const sp = Math.hypot(b.vx, b.vy) || 1;
-          if (superOf(hitP) === "guard") {
-            // Mihide renvoie le carreau à l'envoyeur
-            b.owner = hitP.id; b.vx = -b.vx; b.vy = -b.vy; b.life = R.boltLife; b.x = x0; b.y = y0;
-            this.ev({ k: "reflect", id: hitP.id, x: r1(hitP.x), y: r1(hitP.y) });
-            continue;
-          }
-          if (hitP.shield > 0) this.ev({ k: "block", id: hitP.id, x: r1(hitP.x), y: r1(hitP.y) });
+          if (hitP.shield > 0 || powered(hitP)) this.ev({ k: "block", id: hitP.id, x: r1(hitP.x), y: r1(hitP.y) });
           else this.damage(hitP, sh, "bolt", b.vx / sp * 320, b.vy / sp * 320);
           dead = true;
         } else if (obsT <= 1) {
@@ -563,7 +544,7 @@ class Room {
         this.stunMon(m, dx / d * 420, dy / d * 420);
       }
       if (!this.coop && c.t < R.cloudLife - .3) for (const p of P) {
-        if (p.id === c.owner || !p.alive || c.hit.has(p.id) || p.shield > 0 || superOf(p) === "ram" || superOf(p) === "guard") continue;
+        if (p.id === c.owner || !p.alive || c.hit.has(p.id) || p.shield > 0 || powered(p)) continue;
         if (Math.hypot(c.x - p.x, c.y - p.y) < rad + 10) {
           c.hit.add(p.id); p.stun = R.stun; p.kbBudget = (p.kbBudget || 0) + 300;
           const dx = p.x - c.x, dy = p.y - c.y, d = Math.hypot(dx, dy) || 1;
@@ -578,7 +559,7 @@ class Room {
       const pp = this.poops[i]; pp.t += dt;
       let gone = pp.t > R.poopLife;
       if (!gone && !this.coop) for (const p of P) {
-        if (p.id === pp.owner || !p.alive || p.shield > 0) continue;
+        if (p.id === pp.owner || !p.alive || p.shield > 0 || powered(p)) continue;
         if (Math.hypot(pp.x - p.x, pp.y - p.y) < p.r + 26) {
           const dx = p.x - pp.x, dy = p.y - pp.y, d = Math.hypot(dx, dy) || 1;
           this.damage(p, this.players.get(pp.owner), "poop", dx / d * 300, dy / d * 300);

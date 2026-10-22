@@ -112,10 +112,11 @@ Jusqu'à **10 joueurs** dans la même salle, sur la même carte, sans monstres. 
 
 - **Manches** : dès qu'il y a 2 joueurs, compte à rebours de 4 s, puis manche de 3 min. Le plus de K.O. gagne, ou le premier à 15. Podium pendant 10 s, puis nouvelle manche (scores remis à zéro).
 - **Super-pâtisseries dorées** (2 max sur la carte) : *Éclair foudroyant* = tir rapide 7 s, *Glace triple boule* = 3 carreaux en éventail 7 s, *Donut bouclier* = invulnérable 6 s.
-- **Pouvoir du perso** : chaque K.O. remplit la jauge, à 3 K.O. le pouvoir est prêt (touche **E** ou bouton POUVOIR) et dure 6 s :
-  - Alex (voiture) et Nini (Vespa) : très rapides, renversent au contact, pas de tir, insensibles au prout ;
-  - Greg (machette), Arthur (gode), Gargar (Opinel), Mike (baguette), Tommy (ventouse), Dodo (bâton serpent), Yonarie (tournevis) : plus rapides, K.O. en un coup au contact ; Yonarie crie « Quoiiiiiiiii !? » et étourdit autour d'elle ;
-  - Mihide (bouclier) : invulnérable, renvoie les carreaux à l'envoyeur.
+- **Pouvoir du perso** : chaque K.O. remplit la jauge, à 3 K.O. le pouvoir est prêt (touche **E** ou bouton POUVOIR) et dure 6 s. **Même avantage pour tous les persos**, seul le look change (voiture d'Alex, Vespa de Nini, machette, Opinel, baguette, ventouse, bâton serpent, gode, tournevis, bouclier de Mihide) :
+  - immunité totale : carreaux, prouts, cacas et morsures ne font rien ;
+  - K.O. en un coup de tout adversaire touché ;
+  - même vitesse pour tous, plus rapide qu'en temps normal ; pas de tir pendant le pouvoir.
+  - En solo c'est pareil : pendant le pouvoir (15 s), tous les persos sont intouchables, écrasent les monstres au contact et vont à la même vitesse.
 - Réglages dans `server/server.js` (objets `ROUND`, `POW` et `SUPER`).
 
 **Règles**
