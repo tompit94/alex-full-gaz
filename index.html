@@ -268,6 +268,36 @@ html,body{height:100%;overflow:hidden;background:#2f6b2a;color:var(--ink);font-f
 #mpFeed div{background:rgba(13,9,18,.62);color:var(--parch);padding:3px 7px;border-radius:2px;animation:feedIn .25s ease-out;max-width:62vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #mpFeed b{color:var(--flame);font-weight:700}#mpFeed .k{color:#ff7a5c}
 @keyframes feedIn{from{transform:translateX(-12px);opacity:0}}
+/* classement en cours de partie (TAB ou bouton 🏆) */
+#mpRank{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(9,5,15,.55);z-index:6;padding:12px;cursor:pointer}
+#mpRank .rcard{background:linear-gradient(180deg,var(--stone-2),var(--stone) 40%,#17111f);border:4px solid var(--edge);border-radius:4px;
+  box-shadow:0 0 0 3px #1d4a66,0 0 0 6px var(--edge),0 0 34px 8px rgba(90,190,255,.18);padding:12px 14px;width:min(460px,100%);max-height:calc(100% - 8px);overflow:auto;color:var(--parch);font-family:var(--pixbody)}
+#mpRank h2{margin:0;font-family:var(--pix);font-weight:700;color:#7fd4ff;font-size:clamp(17px,4.6vw,22px);text-transform:uppercase;text-align:center}
+#mpRank .sub{margin:2px 0 8px;font-size:12px;color:var(--mist);text-align:center}
+#mpRank table{width:100%;border-collapse:collapse;font-size:13px}
+#mpRank th{font-family:var(--pix);font-weight:700;font-size:10px;color:var(--mist);text-align:right;padding:2px 6px;text-transform:uppercase}
+#mpRank th.n,#mpRank td.n{text-align:left}
+#mpRank td{padding:3px 6px;text-align:right;white-space:nowrap;background:rgba(255,255,255,.04);border-top:2px solid rgba(0,0,0,.25)}
+#mpRank td.pos{font-family:var(--pix);font-weight:700;width:26px;text-align:center;color:var(--mist)}
+#mpRank tr.p1 td.pos{color:#ffd23a}#mpRank tr.p2 td.pos{color:#d6dde8}#mpRank tr.p3 td.pos{color:#f0a868}
+#mpRank td.n{max-width:150px;overflow:hidden;text-overflow:ellipsis}
+#mpRank td.n img{height:22px;width:auto;vertical-align:middle;margin-right:6px;image-rendering:pixelated}
+#mpRank td.k{font-family:var(--pix);font-weight:700;color:#7fd4ff}
+#mpRank tr.me td{color:var(--flame)}#mpRank tr.me td.k{color:var(--flame)}#mpRank tr.dead td.n{opacity:.55}
+#mpRank .prize{margin:10px 0 0;padding:6px 8px;border:2px solid #8a6a16;background:rgba(255,200,60,.08);font-size:13px;text-align:center}
+#mpRank .prize b{color:#ffd23a}
+#mpRank .hint{margin:8px 0 0;font-size:11px;color:var(--mist);text-align:center}
+/* prix de l'équipe en coopération */
+#mpPrize{position:fixed;left:50%;top:calc(142px + env(safe-area-inset-top,0px));transform:translateX(-50%);pointer-events:none;z-index:5;width:min(400px,calc(100% - 24px))}
+#mpPrize .pz{background:linear-gradient(180deg,#3a2a12,#21170c);border:4px solid #07040b;border-radius:4px;box-shadow:0 0 0 3px #d9a21b,0 0 0 6px #07040b,0 0 40px 10px rgba(255,200,60,.35);
+  padding:10px 14px 12px;text-align:center;color:var(--parch);font-family:var(--pixbody)}
+#mpPrize .pz small{display:block;font-family:var(--pix);font-weight:700;font-size:12px;color:var(--mist);text-transform:uppercase}
+#mpPrize .pz .ico{font-size:46px;line-height:1.1;margin:4px 0 2px;filter:drop-shadow(0 3px 0 #000)}
+#mpPrize .pz b{display:block;font-family:var(--pix);font-weight:700;font-size:clamp(17px,4.8vw,23px);color:#ffd23a;text-shadow:0 2px 0 #7a2a0c}
+#mpPrize .pz p{margin:5px 0 4px;font-size:14px}
+#mpPrize .pz span{font-family:var(--pix);font-size:10px;color:#e8b84a;letter-spacing:1px;text-transform:uppercase}
+#mpPrize.pop .pz{animation:toastIn .45s cubic-bezier(.2,1.6,.4,1)}
+@media (max-width:619px){#mpPrize{top:calc(112px + env(safe-area-inset-top,0px))}#mpPrize .pz .ico{font-size:36px}#mpPrize .pz p{font-size:12px}#mpRank table{font-size:12px}#mpRank td.n{max-width:110px}}
 #mpDead{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);pointer-events:none;text-align:center;font-family:var(--pix);font-weight:700;font-size:clamp(30px,8vw,52px);color:#ff7a5c;line-height:1.1}
 #mpDead small{display:block;font-size:clamp(13px,3.4vw,18px);color:var(--parch);margin-top:8px}
 #bTir{background:radial-gradient(circle at 35% 30%,#ffd89a,#8a4a16);width:96px;height:96px;font-size:18px}
@@ -392,7 +422,7 @@ body.mpPw #mpTimer{top:calc(150px + env(safe-area-inset-top,0px))}
     <div class="cartimer out" id="carT" hidden><span><span id="carL">FULL GAZ !</span> <span id="carS">15</span> s</span><div class="cbar"><i id="carBar"></i></div></div>
   </div>
   <div class="right">
-    <div class="icons"><button id="mute" aria-label="Couper le son">🔊</button><button id="pauseB" aria-label="Pause">II</button></div>
+    <div class="icons"><button id="rankB" aria-label="Classement (touche Tab)" title="Classement (Tab)" hidden>🏆</button><button id="mute" aria-label="Couper le son">🔊</button><button id="pauseB" aria-label="Pause">II</button></div>
     <div class="cafe out" id="cafe"><span>CAFÉ</span><span class="cup" id="cupIco"></span><span id="cafeN">×0</span><span class="key deskOnly">C</span></div>
   </div>
 </div>
@@ -411,6 +441,8 @@ body.mpPw #mpTimer{top:calc(150px + env(safe-area-inset-top,0px))}
 <div id="mpTimer" hidden></div>
 <div id="mpRound" hidden></div>
 <div id="mpPodium" hidden></div>
+<div id="mpRank" hidden role="dialog" aria-label="Classement"></div>
+<div id="mpPrize" hidden role="status"></div>
 
 <div class="screen title-screen" id="startS">
   <h1 class="sr">Full Gaz !</h1>
@@ -897,9 +929,10 @@ function spawnMon(type){let p;for(let k=0;k<60;k++){p=freeSpot(560);const sx=(p.
 /* ---------- input ---------- */
 const keysDown=new Set();const joy={on:false,id:null,bx:0,by:0,x:0,y:0};let touchMode=matchMedia("(pointer:coarse)").matches;
 addEventListener("keydown",e=>{const k=e.key.toLowerCase();if(["arrowup","arrowdown","arrowleft","arrowright"," "].includes(k))e.preventDefault();keysDown.add(k);
-  if(MP){if(!e.repeat)mpKey(k);return}
+  if(MP){if(k==="tab"&&$("pauseS").hidden){e.preventDefault();if(!e.repeat)mpRank(true,true);return}if(!e.repeat)mpKey(k);return}
   if(!running||paused)return;if(k===" "&&!e.repeat)doProut();if(k==="c"&&!e.repeat)doCaca();if(k==="p"||k==="escape")setPause(true)});
-addEventListener("keyup",e=>keysDown.delete(e.key.toLowerCase()));
+addEventListener("keyup",e=>{const k=e.key.toLowerCase();keysDown.delete(k);if(k==="tab"&&MP&&MP.rankTab)mpRank(false)});
+addEventListener("blur",()=>{if(MP&&MP.rankTab)mpRank(false)});
 cvs.addEventListener("pointerdown",e=>{if(e.pointerType!=="mouse"){touchMode=true;applyTouchUI()}if(MP){mpPointer("down",e);return}if(!running||paused||e.pointerType==="mouse")return;
   if(!joy.on){joy.on=true;joy.id=e.pointerId;joy.bx=joy.x=e.clientX;joy.by=joy.y=e.clientY;try{cvs.setPointerCapture(e.pointerId)}catch(_){}}});
 cvs.addEventListener("pointermove",e=>{if(MP)mpPointer("move",e);if(joy.on&&e.pointerId===joy.id){joy.x=e.clientX;joy.y=e.clientY}});
@@ -1206,7 +1239,7 @@ $("openBoard").onclick=openBoard;
 $("openRules").onclick=()=>{$("rulesS").hidden=false;$("closeRules").focus()};$("closeRules").onclick=()=>{$("rulesS").hidden=true;$("openRules").focus()};
 $("startS").addEventListener("keydown",e=>{if(e.key!=="ArrowDown"&&e.key!=="ArrowUp")return;  const items=[$("play"),document.querySelector('.pc[aria-checked="true"]'),$("pseudo"),$("openBoard"),$("openRules")];let i=items.indexOf(document.activeElement);
   if(i<0)i=0;else i=(i+(e.key==="ArrowDown"?1:items.length-1))%items.length;e.preventDefault();items[i].focus()});$("closeBoard").onclick=()=>{$("boardS").hidden=true};
-$("changePseudo").onclick=()=>{$("overS").hidden=true;$("hud").hidden=true;$("startS").hidden=false;$("pseudo").focus();$("pseudo").select()};$("resume").onclick=()=>{audio();setPause(false)};$("pauseB").onclick=()=>setPause(true);
+$("changePseudo").onclick=()=>{$("overS").hidden=true;$("hud").hidden=true;$("startS").hidden=false;$("pseudo").focus();$("pseudo").select()};$("resume").onclick=()=>{audio();setPause(false)};$("pauseB").onclick=()=>setPause(true);$("rankB").onclick=()=>{if(MP)mpRank(!MP.rankOpen,false)};$("mpRank").onclick=()=>{if(MP)mpRank(false)};
 $("mute").onclick=()=>{muted=!muted;$("mute").textContent=muted?"🔇":"🔊";try{localStorage.setItem("gef_mute",muted?"1":"0")}catch(e){}};$("mute").textContent=muted?"🔇":"🔊";
 document.addEventListener("visibilitychange",()=>{if(document.hidden)setPause(true)});
 
@@ -1280,7 +1313,7 @@ function openMP(){if(!askPseudo())return;audio();$("startS").hidden=true;$("mpS"
   if(invite){const inv=invite;invite=null;$("mpRoom").value=inv.room;$("mpRoom").dataset.touched="1";$("mpPriv").checked=inv.priv;
     try{const u=new URL(location.href);["salle","mode","prive"].forEach(k=>u.searchParams.delete(k));history.replaceState(null,"",u)}catch(e){}
     if(mpUrl()){loadMpImgs();setTimeout(mpJoin,0);return}}
-  $("mpCtrl").textContent=touchMode?"Doigt à gauche : courir · doigt à droite : viser et tirer · TIR : tir automatique":"ZQSD ou flèches : courir · souris : viser · clic : tirer · Espace : prout · C : caca · E : pouvoir";
+  $("mpCtrl").textContent=touchMode?"Doigt à gauche : courir · doigt à droite : viser et tirer · TIR : tir automatique":"ZQSD ou flèches : courir · souris : viser · clic : tirer · Espace : prout · C : caca · E : pouvoir · Tab : classement";
   const u=mpUrl(),msg=$("mpMsg");msg.className="save";msg.textContent="";$("mpJoin").disabled=!u;
   if(!u){msg.className="save bad";msg.textContent="Le serveur multijoueur n'est pas encore branché : ajoute son adresse (multiUrl) dans config.js.";$("mpRooms").replaceChildren();return}
   loadMpImgs();refreshRooms(true);clearInterval(roomsTimer);roomsTimer=setInterval(()=>{if($("mpS").hidden){clearInterval(roomsTimer);return}refreshRooms(false)},4000);$("mpJoin").focus()}
@@ -1330,15 +1363,15 @@ function mpStart(ws,m){
     fireHeld:false,tirHeld:false,tapFire:false,hitMark:0,hudSig:"",boardSig:"",killedBy:0,leader:0,
     powers:new Map(),phase:"wait",phaseT:0,phaseAt:performance.now(),round:0,podSig:"",endWhy:"",roundSig:"",timerSig:""};
   cam.x=m.x;cam.y=m.y;keysDown.clear();
-  $("mpS").hidden=true;$("startS").hidden=true;$("overS").hidden=true;$("hud").hidden=false;$("mpBoard").hidden=false;$("mpFeed").hidden=false;$("mpFeed").replaceChildren();$("mpTimer").hidden=false;$("spw").hidden=false;
+  $("mpS").hidden=true;$("startS").hidden=true;$("overS").hidden=true;$("hud").hidden=false;$("mpBoard").hidden=false;$("mpFeed").hidden=false;$("mpFeed").replaceChildren();$("mpTimer").hidden=false;$("spw").hidden=false;$("rankB").hidden=false;
   $("score").parentElement.firstChild.textContent="K.O. ";$("carT").hidden=true;
   $("pauseT").textContent="Menu";$("pauseHint").hidden=false;$("quitMP").hidden=false;$("mpInvite").hidden=false;$("mpRoomInfo").hidden=false;$("mpInviteMsg").hidden=true;
   applyTouchUI();mpHud();feed(`Tu entres dans la salle <b>${esc(MP.room)}</b>${MP.priv?" 🔒":""} · ${MP.coop?"🤝 Coopération":"⚔️ Chacun pour soi"}`);
   $("mpRoomInfo").textContent=`Salle ${MP.room} · ${MP.coop?"🤝 Coopération":"⚔️ Chacun pour soi"}${MP.priv?" · 🔒 privée":""}`;
   if(mode!==mpMode)toast(`La salle ${MP.room} est en mode « ${MODE_LABEL[mode]} »`);
   if(touchMode&&document.documentElement.requestFullscreen&&!document.fullscreenElement){document.documentElement.requestFullscreen().catch(()=>{})}}
-function mpCleanup(){if(!MP)return;const ws=MP.ws;MP=null;try{ws.onclose=null;ws.close()}catch(e){}
-  joy.on=false;keysDown.clear();$("hud").hidden=true;$("mpBoard").hidden=true;$("mpFeed").hidden=true;$("mpDead").hidden=true;$("mpTimer").hidden=true;$("spw").hidden=true;document.body.classList.remove("mpPw");$("mpRound").hidden=true;$("mpPodium").hidden=true;$("pauseS").hidden=true;
+function mpCleanup(){if(!MP)return;const ws=MP.ws;clearTimeout(MP.prizeT);MP=null;try{ws.onclose=null;ws.close()}catch(e){}
+  joy.on=false;keysDown.clear();$("hud").hidden=true;$("mpBoard").hidden=true;$("mpFeed").hidden=true;$("mpDead").hidden=true;$("mpTimer").hidden=true;$("spw").hidden=true;document.body.classList.remove("mpPw");$("mpRound").hidden=true;$("mpPodium").hidden=true;$("pauseS").hidden=true;$("rankB").hidden=true;$("mpRank").hidden=true;$("mpPrize").hidden=true;
   $("score").parentElement.firstChild.textContent="SCORE ";$("pauseT").textContent="Pause";$("pauseHint").hidden=true;$("mpInvite").hidden=true;$("mpRoomInfo").hidden=true;$("mpInviteMsg").hidden=true;applyTouchUI()}
 function mpQuit(){mpCleanup();$("startS").hidden=false;$("openMP").focus()}
 function mpLost(){mpCleanup();openMP();const msg=$("mpMsg");msg.className="save bad";msg.textContent="Connexion perdue. Tu peux rejoindre à nouveau."}
@@ -1423,7 +1456,7 @@ function mpEvent(e){const me=MP.id,P=MP.me;
     case "laugh":{const o=MP.mons.get(e.id);if(o){txt(o.x,o.y-130,"HA HA HA !","#ff5a3a");atPos(o,SFX.laugh)}break}
     case "boss":toast("Le croqueur de pomme débarque !");SFX.laugh();break;
     case "wave":MP.wave=e.n;SFX.horn();mpRoundFlash(String(e.n),"Vague · "+(e.boss?"avec le croqueur de pomme !":e.tot+" monstres"));break;
-    case "wclear":[523,659,784,1047].forEach((f,i)=>tone(f,f*1.01,.18,"triangle",.12,i*.12));mpRoundFlash("BRAVO","Vague "+e.n+" nettoyée");break;
+    case "wclear":{MP.wave=e.n;MP.phase="break";const pz=prizeAt(e.n);if(pz)mpPrize(e.n,pz);else{[523,659,784,1047].forEach((f,i)=>tone(f,f*1.01,.18,"triangle",.12,i*.12));mpRoundFlash("BRAVO","Vague "+e.n+" nettoyée")}break}
     case "rgo":tone(400,900,.18,"square",.12);tone(900,1500,.3,"square",.12,.15);mpRoundFlash("GO !","Manche "+e.n);break;
     case "rend":{MP.endWhy=e.why;MP.winner=e.win;if(e.wave!==undefined&&MP.coop)MP.wave=e.wave;if(MP.coop){SFX.over();cam.shake=6;break}const iw=e.win===me;
       if(iw){[523,659,784,1047].forEach((f,i)=>tone(f,f*1.01,.22,"triangle",.13,i*.14))}else{tone(700,350,.5,"square",.1)}
@@ -1570,7 +1603,7 @@ function mpRoundUI(now){const left=mpPhaseLeft(now),ph=MP.phase,tm=$("mpTimer");
   else if(MP.roundSig&&MP.roundSig[0]==="c"){MP.roundSig="";el.hidden=true}
   // compte à rebours du podium
   if(MP.podSig){const nx=$("mpNext");if(nx){const s=Math.max(1,Math.ceil(left));const t=ph==="end"?(MP.coop?`Nouvelle partie dans ${s} s`:MP.roster.size>=2?`Prochaine manche dans ${s} s`:"En attente d'autres joueurs…"):"";if(nx.textContent!==t)nx.textContent=t}}}
-function showPodium(pod){const sig=JSON.stringify(pod);if(sig===MP.podSig)return;const first=!MP.podSig;MP.podSig=sig;$("mpDead").hidden=true;$("mpRound").hidden=true;
+function showPodium(pod){const sig=JSON.stringify(pod);if(sig===MP.podSig)return;const first=!MP.podSig;MP.podSig=sig;$("mpDead").hidden=true;$("mpRound").hidden=true;$("mpPrize").hidden=true;
   const me=MP.id,why=MP.endWhy,img=ch=>{const k=(MPS[ch]||MPS.sucre).idle,i=IMG[k];return i&&i.src?i.src:""};
   const co=MP.coop,unit=k=>co?k+" monstre"+(k>1?"s":""):k+" K.O.";
   const step=(r,n)=>{if(!r)return`<div class="st p${n}"></div>`;const [id,name,ch,k]=r;const s=img(ch);
@@ -1579,7 +1612,7 @@ function showPodium(pod){const sig=JSON.stringify(pod);if(sig===MP.podSig)return
   const mi=pod.findIndex(r=>r[0]===me),mk=mi<0?0:pod[mi][3];
   const mine=mi<0?"":co?(pod.length===1?`Tu as tenu jusqu'à la vague ${MP.wave} avec ${unit(mk)}`:mi===0?"🏆 Meilleur chasseur de l'équipe !":`Tu finis ${mi+1}e chasseur sur ${pod.length}`):mi===0?"🏆 Tu gagnes la manche !":`Tu finis ${mi+1}e sur ${pod.length}`;
   const rest=pod.slice(3,8).map((r,i)=>`<li class="${r[0]===me?"me":""}"><span>${i+4}. ${esc(r[1])}</span><span>${unit(r[3])} · ${r[4]} M</span></li>`).join("");
-  $("mpPodium").innerHTML=`<div class="pcard"><h2>${co?"Partie terminée":`Manche ${MP.round} terminée`}</h2><p class="why">${whyTxt}</p>
+  $("mpPodium").innerHTML=`<div class="pcard"><h2>${co?"Partie terminée":`Manche ${MP.round} terminée`}</h2><p class="why">${whyTxt}</p>${co?coopTrophy(Math.max(0,MP.wave-1)):""}
     <div class="steps">${step(pod[1],2)}${step(pod[0],1)}${step(pod[2],3)}</div>${rest?`<ol class="rest">${rest}</ol>`:""}
     <p class="mine">${mine}</p><p class="next" id="mpNext"></p></div>`;
   $("mpPodium").hidden=false;if(first&&mi===0)cam.shake=12}
@@ -1590,6 +1623,70 @@ function renderMpBoard(){if(!MP)return;const rows=mpRanking();MP.leader=rows.len
   const b=$("mpBoard");b.innerHTML=`<div class="hd"><span>Salle ${esc(MP.room)}${MP.priv?" 🔒":""} · ${MP.coop?"🤝 vague "+MP.wave:rows.length+"/"+MP.max}</span><span>${MP.coop?"Mon. / M":"K / M"}</span></div>`+
     shown.map(([id,r])=>{const o=id===MP.id?MP.me:MP.others.get(id);const dead=o&&(id===MP.id?!o.alive:!(o.f&1));
       return`<div class="r${id===MP.id?" me":""}${dead?" dead":""}"><span>${id===MP.leader?"👑 ":""}${esc(r.name)}</span><i>${r.kills}</i><em>${r.deaths}</em></div>`}).join("")}
+
+/* ---------- classement en cours de partie : TAB maintenu (ordinateur) ou bouton 🏆 ---------- */
+function mpRank(on,byTab){if(!MP)return;MP.rankOpen=on;MP.rankTab=on&&!!byTab;$("rankB").setAttribute("aria-pressed",on?"true":"false");
+  if(on){MP.rankSig="";renderMpRank();$("mpRank").hidden=false}else $("mpRank").hidden=true}
+function renderMpRank(){if(!MP)return;const rows=mpRanking(),co=MP.coop,me=MP.id,now=performance.now();
+  const pic=ch=>{const k=(MPS[ch]||MPS.sucre).idle,i=IMG[k];return i&&i.src?`<img src="${i.src}" alt="">`:""};
+  let sub;
+  if(co){sub=`🤝 Coopération · vague ${MP.wave||"–"} · ${rows.length} joueur${rows.length>1?"s":""}`}
+  else{const rr=MP.rules.round||{},win=rr.win||15,left=mpPhaseLeft(now),m=Math.floor(left/60),sc=String(Math.floor(left%60)).padStart(2,"0");
+    sub=`⚔️ Manche ${MP.round||1} · premier à ${win} K.O.`+(MP.phase==="play"?` · ⏱ ${m}:${sc}`:"")}
+  const body=rows.map(([id,r],i)=>{const o=id===me?MP.me:MP.others.get(id);const dead=o&&(id===me?!o.alive:!(o.f&1));
+    return`<tr class="p${i+1}${id===me?" me":""}${dead?" dead":""}"><td class="pos">${i+1}</td><td class="n">${pic(r.ch)}${id===MP.leader?"👑 ":""}${esc(r.name)}${dead?" 💀":""}</td><td class="k">${r.kills}</td><td>${r.deaths}</td></tr>`}).join("");
+  let prize="";
+  if(co){const cleared=MP.phase==="break"?MP.wave:Math.max(0,(MP.wave||0)-1),got=Math.floor(cleared/PRIZE_EVERY),nxt=(got+1)*PRIZE_EVERY;
+    const cur=got>0?prizeAt(got*PRIZE_EVERY):null;
+    prize=`<p class="prize">${cur?`Trophée de l'équipe : <b>${cur.e} ${esc(cur.name)}</b>`:"Pas encore de trophée"}<br>Prochain prix à la vague ${nxt}${got<PRIZES.length?` (${got}/${PRIZES.length})`:""}</p>`}
+  const html=`<div class="rcard"><h2>Classement</h2><p class="sub">${sub}</p><table><thead><tr><th></th><th class="n">Joueur</th><th>${co?"Monstres":"K.O."}</th><th>Morts</th></tr></thead><tbody>${body}</tbody></table>${prize}
+    <p class="hint">${MP.rankTab?"Relâche Tab pour fermer":"Touche pour fermer"}</p></div>`;
+  if(html===MP.rankSig)return;MP.rankSig=html;$("mpRank").innerHTML=html}
+
+/* ---------- coopération : un prix pour l'équipe toutes les 5 vagues (échelle de 30 prix) ---------- */
+const PRIZE_EVERY=5;
+const PRIZES=[
+  ["🥐","La Miette d'Or","Premier trophée ! Les monstres commencent à transpirer."],
+  ["🍬","Le Bonbon de Bronze","Joli travail d'équipe, continuez comme ça !"],
+  ["🥖","La Baguette d'Honneur","Croustillant ! Votre équipe a du talent."],
+  ["💨","Le Petit Prout de Bronze","Ça commence à sentir la victoire…"],
+  ["🍫","Le Pain au Chocolat d'Argent","Chocolatine ou pain au chocolat ? Peu importe, vous gérez !"],
+  ["☕","La Tasse de Café Serré","Réveillés et redoutables, bravo l'équipe !"],
+  ["🏹","Le Carreau Doré","Pas un monstre n'échappe à vos arbalètes."],
+  ["💩","La Crotte en Or Massif","Le caca le plus précieux du royaume est à vous."],
+  ["🍝","Les Spaghettis de la Victoire","Mamma mia, quelle équipe !"],
+  ["🍎","Le Trognon du Croqueur","Même le croqueur de pomme a peur de vous."],
+  ["🍔","Le Burger Triple Étage","Une équipe bien garnie, félicitations !"],
+  ["🌪️","Le Prout Supersonique","Le mur du son a été franchi. Respect."],
+  ["🍩","Le Donut Blindé","Rien ne passe à travers votre défense !"],
+  ["🍦","La Glace Triple Boule","Trois boules, zéro monstre debout. Bravo !"],
+  ["⚡","L'Éclair Foudroyant d'Or","Vous tirez plus vite que votre ombre !"],
+  ["🛵","La Vespa Chromée","Vroum vroum ! L'Italien serait fier de vous."],
+  ["🧀","La Lasagne Légendaire","Couche après couche, vous écrasez tout."],
+  ["🧑‍🍳","La Toque du Maître Pâtissier","Vous êtes officiellement chefs de la cuisine monstrueuse."],
+  ["👃","Le Nez d'Acier","Aucun prout ne vous fait peur, félicitations !"],
+  ["🏎️","La Voiture Full Gaz","À fond la caisse ! Vous êtes inarrêtables."],
+  ["🎖️","La Médaille des Chasseurs de Monstres","Les monstres racontent vos exploits à leurs enfants."],
+  ["🍰","Le Gâteau aux 1000 Bougies","Fêtons ça : vous êtes des légendes vivantes !"],
+  ["👑","La Couronne de Croissants","Longue vie aux rois et reines de la pâtisserie !"],
+  ["🧨","Le Pet Nucléaire","Explosif ! La carte entière tremble."],
+  ["🦷","Le Dentier du Croqueur","Vous avez croqué le croqueur. Incroyable."],
+  ["🌋","Le Volcan de Chantilly","Une éruption de talent, félicitations !"],
+  ["🚀","La Fusée à Propulsion Gazeuse","Direction la Lune, propulsés au prout !"],
+  ["🏆","La Coupe du Monde du Prout","Champions du monde ! Personne ne fait mieux."],
+  ["🪄","Le Sceptre du Roi des Pâtissiers","Vous régnez sur toutes les boulangeries du monde."],
+  ["🌟","Le Graal Full Gaz !","LÉGENDAIRE ! Vous avez remporté le prix ultime. Chapeau bas !"],
+];
+// prix gagné en nettoyant la vague n (null si ce n'est pas une vague à prix) ; au-delà de 30, le Graal encore et encore
+function prizeAt(n){if(!n||n%PRIZE_EVERY)return null;const i=n/PRIZE_EVERY,P=PRIZES[Math.min(i,PRIZES.length)-1];return{i,e:P[0],name:P[1],msg:P[2],more:Math.max(0,i-PRIZES.length)}}
+function mpPrize(n,pz){const el=$("mpPrize");
+  el.innerHTML=`<div class="pz"><small>Vague ${n} nettoyée !</small><div class="ico">${pz.e}</div><small>L'équipe remporte</small><b>${esc(pz.name)}${pz.more?" ×"+(pz.more+1):""}</b><p>${esc(pz.msg)}</p><span>${pz.more?"Prix légendaire":`Prix ${pz.i} / ${PRIZES.length}`}</span></div>`;
+  el.hidden=false;el.classList.remove("pop");void el.offsetWidth;el.classList.add("pop");
+  [523,659,784,1047,1319].forEach((f,i)=>tone(f,f*1.01,.24,"triangle",.13,i*.11));setTimeout(()=>{if(MP)[784,1047,1568].forEach((f,i)=>tone(f,f*1.01,.3,"square",.06,i*.08))},620);
+  cam.shake=Math.max(cam.shake||0,6);MP.rankSig="";
+  clearTimeout(MP.prizeT);MP.prizeT=setTimeout(()=>{$("mpPrize").hidden=true},4600)}
+function coopTrophy(cleared){const got=Math.floor(cleared/PRIZE_EVERY);if(!got)return`<p class="why">Premier prix à la vague ${PRIZE_EVERY} !</p>`;
+  const pz=prizeAt(got*PRIZE_EVERY);return`<p class="why">🏆 Trophée de l'équipe : <b style="color:#ffd23a">${pz.e} ${esc(pz.name)}</b>${pz.more?" ×"+(pz.more+1):""}</p>`}
 
 /* ---------- rendu ---------- */
 function drawBolt(x,y,vx,vy){const a=Math.atan2(vy,vx);ctx.fillStyle="rgba(6,0,12,.35)";ctx.beginPath();ctx.ellipse(x,y,9,3,0,0,7);ctx.fill();
@@ -1726,7 +1823,7 @@ function mpDraw(tt,x0,y0,ww,hh){const now=performance.now(),P=MP.me;
     if(P.cd>0){ctx.beginPath();ctx.arc(mx,my,rr+10,-Math.PI/2,-Math.PI/2+Math.PI*2*(1-P.cd/(MP.rules.fireCd||.6)));ctx.strokeStyle="rgba(255,207,58,.7)";ctx.lineWidth=3;ctx.stroke()}}
   else if(MP.hitMark>0){const cx=vw/2,cy=vh/2-40*zoom;ctx.strokeStyle="#ff5a3a";ctx.lineWidth=3;ctx.beginPath();[[1,1],[-1,1],[1,-1],[-1,-1]].forEach(([a,b])=>{ctx.moveTo(cx+a*8,cy+b*8);ctx.lineTo(cx+a*18,cy+b*18)});ctx.stroke()}
   if(P.flash>0){ctx.fillStyle=`rgba(232,64,47,${P.flash*.9})`;ctx.fillRect(0,0,vw,vh)}
-  if(MP.boardSig&&Math.floor(t*2)!==MP.bt){MP.bt=Math.floor(t*2);renderMpBoard()}}
+  if(MP.boardSig&&Math.floor(t*2)!==MP.bt){MP.bt=Math.floor(t*2);renderMpBoard();if(MP.rankOpen)renderMpRank()}}
 
 $("openMP").onclick=openMP;$("mpJoin").onclick=mpJoin;$("mpBack").onclick=()=>{$("mpS").hidden=true;$("startS").hidden=false;clearInterval(roomsTimer);$("openMP").focus()};
 $("mpRoom").addEventListener("keydown",e=>{e.stopPropagation();if(e.key==="Enter")mpJoin()});

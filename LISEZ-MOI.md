@@ -124,6 +124,7 @@ Jusqu'à **10 joueurs** dans la même salle, sur la même carte, sans monstres. 
 - Les friandises redonnent un cœur et remplissent la jauge. Le **prout** étourdit les adversaires autour de toi.
 - Le **café** donne un coup de boost et un **caca piégé** : l'adversaire qui marche dedans perd un cœur.
 - Le tableau en haut à droite classe les joueurs par K.O. Le 1er porte la 👑.
+- **Classement complet** en cours de partie : maintiens **Tab** (ordinateur) ou touche le bouton **🏆** en haut à droite (téléphone). Marche aussi en coopération.
 - On rejoint une salle avec un **code** (par défaut `GAZ`, ou `COOP` en coopération). Donne le même code à tes potes pour être ensemble. Une salle pleine refuse le 11e joueur.
 
 ### Mode Coopération
@@ -136,11 +137,12 @@ De 1 à **10 joueurs** ensemble contre les monstres du mode solo (et le croqueur
 - **Morsure** = -1 cœur. K.O., tu reviens 6 s plus tard.
 - **Défaite** : si toute l'équipe est K.O. en même temps. Podium des meilleurs chasseurs (monstres éliminés), puis nouvelle partie au bout de 10 s.
 - **Pouvoir du perso** : 5 monstres éliminés remplissent la jauge.
+- **Prix de l'équipe** : toutes les **5 vagues** nettoyées, l'équipe gagne un prix avec un message de félicitations (échelle de 30 prix, de « La Miette d'Or » au « Graal Full Gaz ! »). Le dernier prix gagné est rappelé dans le classement et sur le podium. Liste et fréquence dans `index.html` (`PRIZES` et `PRIZE_EVERY`).
 - Réglages dans `server/server.js` (objets `COOP` et `MON`).
 
 **Commandes**
 
-- Ordinateur : ZQSD ou flèches pour courir, souris pour viser, clic pour tirer, Espace pour le prout, C pour le caca.
+- Ordinateur : ZQSD ou flèches pour courir, souris pour viser, clic pour tirer, Espace pour le prout, C pour le caca, E pour le pouvoir, Tab (maintenu) pour le classement.
 - Téléphone : doigt à gauche pour courir, doigt à droite pour viser et tirer, bouton **TIR** pour le tir automatique sur l'adversaire le plus proche.
 
 ### Pourquoi un serveur à part ?
