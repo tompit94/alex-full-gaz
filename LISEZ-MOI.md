@@ -125,7 +125,7 @@ Jusqu'à **10 joueurs** dans la même salle, sur la même carte, sans monstres. 
 - Les friandises redonnent un cœur et remplissent la jauge. Le **prout** étourdit les adversaires autour de toi.
 - Le **café** donne un coup de boost et un **caca piégé** : l'adversaire qui marche dedans perd un cœur.
 - Le tableau en haut à droite classe les joueurs par K.O. Le 1er porte la 👑.
-- **Classement complet** en cours de partie : maintiens **Alt Gr** (ordinateur) ou touche le bouton **🏆** en haut à droite (téléphone). Marche aussi en coopération.
+- **Classement complet** en cours de partie : maintiens **Tab** ou **Alt Gr** (ordinateur) ou touche le bouton **🏆** en haut à droite (téléphone). Marche aussi en coopération.
 - On rejoint une salle avec un **code** (par défaut `GAZ`, ou `COOP` en coopération). Donne le même code à tes potes pour être ensemble. Une salle pleine refuse le 11e joueur.
 
 ### Mode Coopération
@@ -143,7 +143,7 @@ De 1 à **10 joueurs** ensemble contre les monstres du mode solo (et le croqueur
 
 **Commandes**
 
-- Ordinateur : ZQSD ou flèches pour courir, souris pour viser, clic pour tirer, Espace pour le prout, C pour le caca, E pour le pouvoir, Alt Gr (maintenu) pour le classement.
+- Ordinateur : ZQSD ou flèches pour courir, souris pour viser, clic pour tirer, Espace pour le prout, C pour le caca, E pour le pouvoir, Tab ou Alt Gr (maintenu) pour le classement.
 - Téléphone : doigt à gauche pour courir, doigt à droite pour viser et tirer, bouton **TIR** pour le tir automatique sur l'adversaire le plus proche.
 
 ### Pourquoi un serveur à part ?
